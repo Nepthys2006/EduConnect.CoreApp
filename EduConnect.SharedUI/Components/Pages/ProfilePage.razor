@@ -1,0 +1,164 @@
+@page "/profile"
+@inject IDataService DataService
+
+<PageTitle>Profile - EduConnect</PageTitle>
+
+<div class="prof-container">
+    <div class="prof-header">
+        <div class="prof-avatar-wrap">
+            <div class="prof-avatar ec-avatar ec-avatar-xl">@CssClassHelpers.GetInitials(User?.Name)</div>
+            <button class="prof-avatar-edit">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="white" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+        </div>
+        <h1 class="prof-name">@User?.Name</h1>
+        <div class="prof-meta">
+            <span class="ec-badge ec-badge-primary">@User?.Role</span>
+            <span class="prof-email">@User?.Email</span>
+        </div>
+    </div>
+
+    <div class="prof-grid">
+        <div class="prof-col">
+            <div class="ec-card">
+                <div class="prof-card-header">
+                    <h3 class="prof-card-title">Basic Information</h3>
+                    <button class="ec-btn ec-btn-sm ec-btn-secondary" @onclick="ToggleEdit">@EditButtonLabel</button>
+                </div>
+                <div class="prof-fields">
+                    <div class="prof-field">
+                        <label class="prof-label">Full Name</label>
+                        @if (IsEditing)
+                        {
+                            <input class="ec-input" @bind="EditName" />
+                        }
+                        else
+                        {
+                            <span class="prof-value">@User?.Name</span>
+                        }
+                    </div>
+                    <div class="prof-field">
+                        <label class="prof-label">Email Address</label>
+                        @if (IsEditing)
+                        {
+                            <input class="ec-input" @bind="EditEmail" />
+                        }
+                        else
+                        {
+                            <span class="prof-value">@User?.Email</span>
+                        }
+                    </div>
+                    <div class="prof-field">
+                        <label class="prof-label">@(User?.Role == "Teacher" ? "Employee ID" : "LRN")</label>
+                        <span class="prof-value" style="font-family:'JetBrains Mono',monospace;">@DisplayId</span>
+                    </div>
+                    <div class="prof-field">
+                        <label class="prof-label">Password</label>
+                        <span class="prof-value">•••••••• <a href="#" class="prof-link">Change password</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="prof-col">
+            <div class="ec-card">
+                <div class="prof-card-header">
+                    <h3 class="prof-card-title">Additional Information</h3>
+                </div>
+                <div class="prof-fields">
+                    <div class="prof-field">
+                        <label class="prof-label">Gender</label>
+                        @if (IsEditing)
+                        {
+                            <select class="ec-input"><option>Male</option><option>Female</option></select>
+                        }
+                        else
+                        {
+                            <span class="prof-value">—</span>
+                        }
+                    </div>
+                    <div class="prof-field">
+                        <label class="prof-label">Birthday</label>
+                        @if (IsEditing)
+                        {
+                            <input class="ec-input" type="date" />
+                        }
+                        else
+                        {
+                            <span class="prof-value">—</span>
+                        }
+                    </div>
+                    <div class="prof-field">
+                        <label class="prof-label">Education Level</label>
+                        @if (IsEditing)
+                        {
+                            <input class="ec-input" placeholder="e.g. Master's Degree" />
+                        }
+                        else
+                        {
+                            <span class="prof-value">— <a href="#" class="prof-link">Add</a></span>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="ec-card" style="margin-top: var(--space-6);">
+        <div class="prof-card-header">
+            <h3 class="prof-card-title">Contact Information</h3>
+        </div>
+        <div class="prof-fields prof-fields-row">
+            <div class="prof-field">
+                <label class="prof-label">Mailing Address</label>
+                @if (IsEditing)
+                {
+                    <textarea class="ec-input" rows="2" placeholder="Enter address"></textarea>
+                }
+                else
+                {
+                    <span class="prof-value">— <a href="#" class="prof-link">Add</a></span>
+                }
+            </div>
+            <div class="prof-field">
+                <label class="prof-label">Phone Number</label>
+                @if (IsEditing)
+                {
+                    <input class="ec-input" type="tel" placeholder="+63..." />
+                }
+                else
+                {
+                    <span class="prof-value">— <a href="#" class="prof-link">Add</a></span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private User? User { get; set; }
+    private bool IsEditing { get; set; } = false;
+    private string EditButtonLabel => IsEditing ? "Save" : "Edit Details";
+    private string EditName { get; set; } = "";
+    private string EditEmail { get; set; } = "";
+    private string DisplayId => User?.Role == "Teacher" ? "TCH-2025-001" : (User?.LearnerReferenceNumber?.ToString() ?? "—");
+
+    protected override async Task OnInitializedAsync()
+    {
+        User = await DataService.GetCurrentUserAsync();
+        EditName = User?.Name ?? "";
+        EditEmail = User?.Email ?? "";
+    }
+
+    private void ToggleEdit()
+    {
+        if (IsEditing)
+        {
+            if (User != null)
+            {
+                User.Name = EditName;
+                User.Email = EditEmail;
+            }
+        }
+        IsEditing = !IsEditing;
+    }
+}

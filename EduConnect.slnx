@@ -3,7 +3,6 @@
   <Project Path="EduConnect.Domain/EduConnect.Domain.csproj" />
   <Project Path="EduConnect.Infrastructure/EduConnect.Infrastructure.csproj" />
   <Project Path="EduConnect.Maui/EduConnect.Maui.csproj" />
-  <Project Path="EduConnect.RealTime/EduConnect.RealTime.csproj" />
   <Project Path="EduConnect.SharedUI/EduConnect.SharedUI.csproj" />
   <Project Path="EduConnect.Web/EduConnect.Web.csproj" />
 </Solution>

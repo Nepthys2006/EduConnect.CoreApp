@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
+using EduConnect.SharedUI.Services;
 
 namespace EduConnect.Maui;
 
@@ -12,9 +13,14 @@ public static class MauiProgram
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
+				fonts.AddFont("DM Sans", "DM Sans");
 			});
 
 		builder.Services.AddMauiBlazorWebView();
+
+		// EduConnect Services
+		builder.Services.AddSingleton<IAuthService, MockAuthService>();
+		builder.Services.AddSingleton<IDataService, MockDataService>();
 
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();

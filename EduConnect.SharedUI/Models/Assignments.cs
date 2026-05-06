@@ -1,20 +1,48 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel.DataAnnotations;
 
 namespace EduConnect.SharedUI.Models
 {
-    internal class Assignments
+    public class Assignment
     {
-        public string AssignmentId { get; set; }
-        public string AssignmentTitle { get; set; }
-        public string AssignmentDescription { get; set; }
-        public string AssignmentDueDate { get; set; }
+        [Required]
+        [MaxLength(36)]
+        public string AssignmentId { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(200)]
+        public string AssignmentTitle { get; set; } = string.Empty;
+
+        [MaxLength(2000)]
+        public string AssignmentDescription { get; set; } = string.Empty;
+
+        [Required]
+        public DateTime AssignedDate { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        public DateTime DueDate { get; set; }
+
         public double TotalPoints { get; set; }
-        public string AssignmentType { get; set; }
-        public string AssignmentStatus { get; set; } 
-        public string AssignmentAttachements { get; set; }
 
+        [Required]
+        [MaxLength(50)]
+        public string AssignmentType { get; set; } = string.Empty;
 
+        [Required]
+        [MaxLength(20)]
+        public string AssignmentStatus { get; set; } = "Draft";
+
+        [MaxLength(1000)]
+        public string? Attachments { get; set; }
+
+        [Required]
+        [MaxLength(36)]
+        public string ClassId { get; set; } = string.Empty;
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
+
+        public Class? Class { get; set; }
     }
 }

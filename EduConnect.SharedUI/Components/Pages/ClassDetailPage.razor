@@ -1,0 +1,81 @@
+@page "/class/{ClassId}"
+@using EduConnect.SharedUI.Components.Views
+@inject IDataService DataService
+@inject NavigationManager Navigation
+
+<PageTitle>@ClassSubject - EduConnect</PageTitle>
+
+@if (CurrentClass == null)
+{
+    <div class="cd-loading">Loading class...</div>
+}
+else
+{
+    <div class="cd-container">
+        <!-- Class Header -->
+        <div class="cd-header @CssClassHelpers.GetGradientClass(CurrentClass.ClassId)">
+            <div class="cd-header-top">
+                <span class="cd-section-badge">@CurrentClass.Section</span>
+                <button class="ec-btn ec-btn-sm" style="background:rgba(255,255,255,0.18); color:white; border-color:rgba(255,255,255,0.30);">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    Add Students
+                </button>
+            </div>
+            <h1 class="cd-class-name">@CurrentClass.Subject</h1>
+            <p class="cd-class-instructor">@CurrentClass.Instructor?.Name</p>
+        </div>
+
+        <!-- Tabs -->
+        <div class="ec-tabs cd-tabs">
+            @foreach (var tab in TabNames)
+            {
+                <button class="ec-tab @(ActiveTab == tab ? "active" : "")" @onclick="() => ActiveTab = tab">@tab</button>
+            }
+        </div>
+
+        <!-- Tab Content -->
+        <div class="cd-tab-content" style="animation: fadeIn 150ms ease;">
+            @switch (ActiveTab)
+            {
+                case "Announcements":
+                    <AnnouncementsView ClassId="@ClassId" />
+                    break;
+                case "Content":
+                    <ContentView ClassId="@ClassId" />
+                    break;
+                case "Assignments":
+                    <AssignmentsView ClassId="@ClassId" />
+                    break;
+                case "Members":
+                    <MembersView ClassId="@ClassId" />
+                    break;
+                case "Grades":
+                    <GradesView ClassId="@ClassId" />
+                    break;
+                case "Messages":
+                    <MessagesView ClassId="@ClassId" />
+                    break;
+                case "Attendance":
+                    <AttendanceView ClassId="@ClassId" />
+                    break;
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public string ClassId { get; set; } = "";
+    private Class? CurrentClass { get; set; }
+    private string ActiveTab { get; set; } = "Announcements";
+    private List<string> TabNames { get; set; } = new() { "Announcements", "Content", "Assignments", "Members", "Grades", "Messages", "Attendance" };
+
+    private string ClassSubject => CurrentClass?.Subject ?? "Class";
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (!string.IsNullOrEmpty(ClassId))
+        {
+            CurrentClass = await DataService.GetClassAsync(ClassId);
+        }
+    }
+}

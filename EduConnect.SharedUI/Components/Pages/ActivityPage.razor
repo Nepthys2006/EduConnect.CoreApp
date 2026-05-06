@@ -1,0 +1,76 @@
+@page "/activity"
+@inject IDataService DataService
+
+<PageTitle>Activity - EduConnect</PageTitle>
+
+<div class="act-container">
+    <h1 class="act-title">Activity Center</h1>
+    <div class="act-tabs">
+        @foreach (var t in new[] { "All", "Messages", "Submissions", "Alerts" })
+        {
+            <button class="ec-tab @(ActiveFilter == t ? "active" : "")" @onclick="() => ActiveFilter = t">@t</button>
+        }
+    </div>
+
+    <div class="act-list">
+        @if (FilteredActivities.Count == 0)
+        {
+            <div class="act-empty">
+                <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--color-text-tertiary)" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                <p>No recent activity</p>
+            </div>
+        }
+        else
+        {
+            @foreach (var item in FilteredActivities)
+            {
+                <div class="act-item">
+                    <div class="act-icon @GetCategoryIcon(item.Category)">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">@((MarkupString)GetCategorySvg(item.Category))</svg>
+                    </div>
+                    <div class="act-content">
+                        <span class="act-text">@item.Title</span>
+                        <span class="act-category">@item.Category</span>
+                    </div>
+                    <span class="act-time">@GetRelativeTime(item.Timestamp)</span>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<ActivityItem> Activities { get; set; } = new();
+    private string ActiveFilter { get; set; } = "All";
+    private List<ActivityItem> FilteredActivities => ActiveFilter == "All"
+        ? Activities
+        : Activities.Where(a => a.Category == ActiveFilter).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        Activities = await DataService.GetActivitiesAsync("teacher-001");
+    }
+
+    private string GetCategoryIcon(string category) => category.ToLower() switch
+    {
+        "messages" => "act-icon-msg",
+        "submissions" => "act-icon-sub",
+        _ => "act-icon-alert"
+    };
+
+    private string GetCategorySvg(string category) => category.ToLower() switch
+    {
+        "messages" => "<path d=\"M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z\"/>",
+        "submissions" => "<path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/>",
+        _ => "<circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"12\" y1=\"8\" x2=\"12\" y2=\"12\"/><line x1=\"12\" y1=\"16\" x2=\"12.01\" y2=\"16\"/>"
+    };
+
+    private string GetRelativeTime(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalMinutes < 1) return "Just now";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
+        return $"{(int)diff.TotalDays}d ago";
+    }
+}

@@ -1,17 +1,42 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace EduConnect.SharedUI.Models
 {
-    internal class Annoucements
+    public class Announcement
     {
-        public string AnnoucementId { get; set; }
-        public string AnnoucementAuthor { get; set; }
-        public string AnnoucementTitle { get; set; }
-        public string AnnoucementDescription { get; set; }
-        public string AnnoucementDate { get; set; }
-        public string Attachements { get; set; }
- 
+        [Required]
+        [MaxLength(36)]
+        public string AnnouncementId { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(36)]
+        [ForeignKey(nameof(Author))]
+        public string AnnouncementAuthorId { get; set; } = string.Empty;
+
+        [Required]
+        [MaxLength(200)]
+        public string AnnouncementTitle { get; set; } = string.Empty;
+
+        [Required]
+        public string AnnouncementDescription { get; set; } = string.Empty;
+
+        [Required]
+        public DateTime AnnouncementDate { get; set; } = DateTime.UtcNow;
+
+        [Required]
+        [MaxLength(36)]
+        public string ClassId { get; set; } = string.Empty;
+
+        [MaxLength(1000)]
+        public string? Attachments { get; set; }
+
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; }
+        public bool IsDeleted { get; set; }
+
+        public User? Author { get; set; }
+        public Class? Class { get; set; }
     }
 }
