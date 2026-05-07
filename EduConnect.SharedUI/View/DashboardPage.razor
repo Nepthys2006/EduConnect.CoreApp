@@ -1,0 +1,154 @@
+@page "/"
+@page "/home"
+@using EduConnect.SharedUI.Services
+@inject IAuthService AuthService
+@inject IDataService DataService
+@inject NavigationManager Nav
+
+<div class="td-container page-enter">
+    @* Welcome Banner *@
+    <div class="td-welcome">
+        <div class="td-welcome-text">
+            <h2 class="td-welcome-title">Welcome back, @(AuthService.CurrentUser?.FullName ?? "Teacher")! <span class="td-wave">👋</span></h2>
+            <p class="td-welcome-sub">You have <strong>@_upcomingClasses.Count classes</strong> today and <strong>@_totalSubmissions new submissions</strong> waiting for your review.</p>
+            <div class="td-welcome-actions">
+                <button class="ec-btn ec-btn-secondary" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.4);" @onclick='() => Nav.NavigateTo("/calendar")'>View Schedule</button>
+                <button class="ec-btn ec-btn-secondary" style="background:rgba(255,255,255,0.15);color:white;border-color:rgba(255,255,255,0.4);" @onclick='() => Nav.NavigateTo("/classes")'>Check Gradebook</button>
+            </div>
+        </div>
+        <div class="td-welcome-illust">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none">
+                <rect x="20" y="30" width="80" height="60" rx="6" fill="rgba(255,255,255,0.2)" stroke="white" stroke-width="2"/>
+                <rect x="30" y="40" width="60" height="6" rx="3" fill="rgba(255,255,255,0.4)"/>
+                <rect x="30" y="52" width="40" height="6" rx="3" fill="rgba(255,255,255,0.3)"/>
+                <rect x="30" y="64" width="50" height="6" rx="3" fill="rgba(255,255,255,0.25)"/>
+                <path d="M75 75l10-10M85 65l5 5" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+        </div>
+    </div>
+
+    @* Create Class + To-Do Grid *@
+    <div class="td-grid">
+        <div class="td-col-main">
+            <div class="ec-card">
+                <h3 class="td-card-title">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+                    Create Class
+                </h3>
+                <div class="td-create-form">
+                    <div class="td-form-row">
+                        <div class="td-form-group">
+                            <label class="td-label">Subject:</label>
+                            <input class="ec-input" @bind="_newSubject" placeholder="e.g. Mathematics" />
+                        </div>
+                        <div class="td-form-group">
+                            <label class="td-label">Grade:</label>
+                            <input class="ec-input" @bind="_newGrade" placeholder="10" />
+                        </div>
+                        <div class="td-form-group">
+                            <label class="td-label">Section:</label>
+                            <input class="ec-input" @bind="_newSection" placeholder="Einstein" />
+                        </div>
+                        <div class="td-form-group">
+                            <label class="td-label">S.Y.:</label>
+                            <input class="ec-input" @bind="_newSY" placeholder="2025-2026" />
+                        </div>
+                    </div>
+                    <button class="ec-btn ec-btn-primary" style="width:100%;" @onclick="CreateClass">Create</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="td-col-side">
+            <div class="ec-card">
+                <h3 class="td-card-title">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+                    To-Do / Grading
+                </h3>
+                <div class="td-todo-list">
+                    @foreach (var todo in _todos)
+                    {
+                        <div class="td-todo-item">
+                            <div class="td-todo-content">
+                                <p class="td-todo-name">@todo.Title</p>
+                                <p class="td-todo-desc">@todo.SubmittedCount/@todo.TotalCount students submitted</p>
+                            </div>
+                            <span class="ec-badge @CssClassHelpers.GetDueBadgeClass(todo.DueDate)">@CssClassHelpers.GetDueBadgeText(todo.DueDate)</span>
+                        </div>
+                    }
+                    @if (!_todos.Any())
+                    {
+                        <div class="td-empty">No pending tasks</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @* Upcoming Classes *@
+    <div class="ec-card">
+        <h3 class="td-card-title" style="justify-content:center;">Upcoming Classes Today</h3>
+        <div class="td-class-list">
+            @foreach (var cls in _upcomingClasses)
+            {
+                var colors = new[] { "#2563EB", "#6366F1", "#0EA5E9", "#10B981" };
+                var color = colors[cls.GradientIndex % colors.Length];
+                <div class="td-class-row" @onclick="() => NavigateToClass(cls.Id)">
+                    <div class="td-class-accent" style="background: @color;"></div>
+                    <div style="text-align:center; min-width: 60px;">
+                        <span class="ec-badge ec-badge-primary" style="font-size:11px;padding:6px 10px;">GRADE<br/>@cls.GradeLevel.Replace("Grade ", "")</span>
+                    </div>
+                    <div class="td-class-body">
+                        <h4 class="td-class-name">@cls.Subject</h4>
+                        <div class="td-class-meta">
+                            <span class="td-meta-item">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                                @cls.StartTime - @cls.EndTime
+                            </span>
+                            <span class="td-meta-item">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                Section @cls.Section
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            }
+            @if (!_upcomingClasses.Any())
+            {
+                <div class="td-empty">No classes scheduled for today</div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<EduConnect.SharedUI.Models.TodoItem> _todos = new();
+    private List<EduConnect.SharedUI.Models.ClassRoom> _upcomingClasses = new();
+    private int _totalSubmissions;
+    private string _newSubject = "", _newGrade = "", _newSection = "", _newSY = "2025-2026";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.CurrentUser == null) { Nav.NavigateTo("/signin"); return; }
+        _todos = await DataService.GetTodoItemsAsync(AuthService.CurrentUser.Id);
+        _upcomingClasses = await DataService.GetUpcomingClassesAsync(AuthService.CurrentUser.Id);
+        _totalSubmissions = _todos.Sum(t => t.SubmittedCount);
+    }
+
+    private async Task CreateClass()
+    {
+        if (string.IsNullOrWhiteSpace(_newSubject) || AuthService.CurrentUser == null) return;
+        await DataService.CreateClassAsync(new EduConnect.SharedUI.Models.ClassRoom
+        {
+            Subject = _newSubject,
+            GradeLevel = $"Grade {_newGrade}",
+            Section = _newSection,
+            SchoolYear = _newSY,
+            TeacherId = AuthService.CurrentUser.Id
+        });
+        _newSubject = _newGrade = _newSection = "";
+        _upcomingClasses = await DataService.GetUpcomingClassesAsync(AuthService.CurrentUser.Id);
+    }
+
+    private void NavigateToClass(Guid classId) => Nav.NavigateTo($"/classes/{classId}");
+}

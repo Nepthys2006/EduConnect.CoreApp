@@ -1,0 +1,138 @@
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IDataService DataService
+@inject IAuthService AuthService
+
+<div class="msg-container">
+    <div class="msg-sidebar">
+        <button class="ec-btn ec-btn-primary" style="width:100%;background:#1E293B;border-color:#1E293B;">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            New Message
+        </button>
+        <input class="ec-input msg-search" placeholder="Search conversations..." aria-label="Search conversations" />
+        <div class="msg-conv-list">
+            @foreach (var conv in _conversations)
+            {
+                <div class="msg-conv @(conv.Id == _selectedConv?.Id ? "active" : "")" @onclick="() => SelectConversation(conv)" role="button" tabindex="0">
+                    <div class="ec-avatar">@CssClassHelpers.GetInitials(conv.Title)</div>
+                    <div class="msg-conv-info">
+                        <div class="msg-conv-top">
+                            <span class="msg-conv-name">@conv.Title</span>
+                            <span class="msg-conv-time">@FormatTime(conv.LastMessageAt)</span>
+                        </div>
+                        <div class="msg-conv-preview">@conv.LastMessagePreview</div>
+                    </div>
+                    @if (conv.UnreadCount > 0)
+                    {
+                        <span class="msg-unread">@conv.UnreadCount</span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="msg-view">
+        @if (_selectedConv != null)
+        {
+            <div class="msg-view-header">
+                <div class="ec-avatar">@CssClassHelpers.GetInitials(_selectedConv.Title)</div>
+                <div>
+                    <div style="font-weight:600;">@_selectedConv.Title</div>
+                    @if (_selectedConv.IsGroup)
+                    {
+                        <span style="font-size:12px;color:var(--color-text-tertiary);">Group · @_selectedConv.ParticipantIds.Count members</span>
+                    }
+                </div>
+            </div>
+            <div class="msg-messages">
+                @foreach (var msg in _messages)
+                {
+                    var isMe = msg.SenderId == AuthService.CurrentUser?.Id;
+                    <div class="msg-bubble @(isMe ? "msg-bubble-me" : "msg-bubble-them")">
+                        @if (!isMe)
+                        {
+                            <span style="font-size:11px;font-weight:500;color:var(--color-text-secondary);">@GetSenderName(msg.SenderId)</span>
+                        }
+                        <div class="msg-bubble-content">@msg.Body</div>
+                        <span class="msg-bubble-time">@msg.SentAt.ToString("h:mm tt")</span>
+                    </div>
+                }
+            </div>
+            <div class="msg-composer">
+                <div class="msg-composer-toolbar">
+                    <button class="ec-icon-btn" aria-label="Bold"><strong>B</strong></button>
+                    <button class="ec-icon-btn" aria-label="Italic"><em>I</em></button>
+                    <button class="ec-icon-btn" aria-label="Underline"><u>U</u></button>
+                    <button class="ec-icon-btn" aria-label="Attach">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                    </button>
+                </div>
+                <div style="display:flex;gap:var(--space-2);">
+                    <input class="ec-input" placeholder="Type a message..." @bind="_newMessage" @onkeydown="HandleKey" aria-label="Message input" />
+                    <button class="ec-btn ec-btn-primary" @onclick="SendMessage">Send</button>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="msg-empty">Select a conversation to start messaging</div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid ClassRoomId { get; set; }
+    private List<Conversation> _conversations = new();
+    private List<Message> _messages = new();
+    private Conversation? _selectedConv;
+    private string _newMessage = "";
+    private Dictionary<Guid, string> _userNames = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.CurrentUser != null)
+            _conversations = await DataService.GetConversationsAsync(AuthService.CurrentUser.Id);
+    }
+
+    private async Task SelectConversation(Conversation conv)
+    {
+        _selectedConv = conv;
+        _messages = await DataService.GetMessagesAsync(conv.Id);
+        foreach (var msg in _messages)
+        {
+            if (!_userNames.ContainsKey(msg.SenderId))
+            {
+                var user = await DataService.GetUserByIdAsync(msg.SenderId);
+                _userNames[msg.SenderId] = user?.FullName ?? "Unknown";
+            }
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_newMessage) || _selectedConv == null || AuthService.CurrentUser == null) return;
+        await DataService.SendMessageAsync(new Message
+        {
+            SenderId = AuthService.CurrentUser.Id,
+            Body = _newMessage,
+            IsGroupMessage = _selectedConv.IsGroup,
+            ClassRoomId = ClassRoomId
+        });
+        _newMessage = "";
+        _messages = await DataService.GetMessagesAsync(_selectedConv.Id);
+    }
+
+    private async Task HandleKey(Microsoft.AspNetCore.Components.Web.KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await SendMessage();
+    }
+
+    private string GetSenderName(Guid id) => _userNames.GetValueOrDefault(id, "Unknown");
+    private string FormatTime(DateTime dt)
+    {
+        var diff = DateTime.UtcNow - dt;
+        if (diff.TotalHours < 1) return $"{(int)diff.TotalMinutes}m";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h";
+        return dt.ToString("MMM d");
+    }
+}

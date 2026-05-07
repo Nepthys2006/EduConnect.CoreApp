@@ -1,0 +1,80 @@
+@page "/activity"
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IAuthService AuthService
+@inject IDataService DataService
+@inject NavigationManager Nav
+
+<div class="act-container page-enter">
+    <h1 class="act-title">Activity Center</h1>
+
+    <div class="act-tabs ec-tabs">
+        @foreach (var tab in _tabs)
+        {
+            <button class="ec-tab @(tab == _activeTab ? "active" : "")" @onclick="() => _activeTab = tab">@tab</button>
+        }
+    </div>
+
+    <div class="ec-card" style="padding:0;">
+        <div class="act-list">
+            @foreach (var item in FilteredItems)
+            {
+                <div class="act-item">
+                    <div class="act-icon @GetIconClass(item.IconType)">
+                        @GetIcon(item.IconType)
+                    </div>
+                    <div class="act-content">
+                        <span class="act-text">@item.Title</span>
+                        <span class="act-category">@item.Category</span>
+                    </div>
+                    <span class="act-time">@item.TimeAgo</span>
+                </div>
+            }
+            @if (!FilteredItems.Any())
+            {
+                <div class="act-empty">
+                    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    <span>No activity yet</span>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    private List<ActivityItem> _activities = new();
+    private string _activeTab = "All";
+    private readonly string[] _tabs = { "All", "Messages", "Submissions", "Alerts" };
+
+    private IEnumerable<ActivityItem> FilteredItems => _activeTab switch
+    {
+        "Messages" => _activities.Where(a => a.Category == "Message"),
+        "Submissions" => _activities.Where(a => a.Category == "Submission"),
+        "Alerts" => _activities.Where(a => a.Category is "Alert" or "Report"),
+        _ => _activities
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.CurrentUser == null) { Nav.NavigateTo("/signin"); return; }
+        _activities = await DataService.GetActivityFeedAsync(AuthService.CurrentUser.Id);
+    }
+
+    private string GetIconClass(string type) => type switch
+    {
+        "submission" => "act-icon-sub",
+        "message" => "act-icon-msg",
+        "alert" => "act-icon-alert",
+        "report" => "act-icon-msg",
+        _ => "act-icon-msg"
+    };
+
+    private MarkupString GetIcon(string type) => type switch
+    {
+        "submission" => (MarkupString)"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2'><path d='M22 11.08V12a10 10 0 1 1-5.93-9.14'/><polyline points='22 4 12 14.01 9 11.01'/></svg>",
+        "message" => (MarkupString)"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2'><path d='M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z'/><polyline points='22,6 12,13 2,6'/></svg>",
+        "alert" => (MarkupString)"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='10'/><line x1='12' y1='8' x2='12' y2='12'/><line x1='12' y1='16' x2='12.01' y2='16'/></svg>",
+        "report" => (MarkupString)"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2'><line x1='18' y1='20' x2='18' y2='10'/><line x1='12' y1='20' x2='12' y2='4'/><line x1='6' y1='20' x2='6' y2='14'/></svg>",
+        _ => (MarkupString)"<svg viewBox='0 0 24 24' width='18' height='18' fill='none' stroke='currentColor' stroke-width='2'><circle cx='12' cy='12' r='10'/></svg>"
+    };
+}

@@ -1,0 +1,106 @@
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IDataService DataService
+@inject IAuthService AuthService
+
+<div class="mem-container">
+    <div class="mem-header">
+        <div class="mem-header-left">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="mem-count">TOTAL MEMBERS: @_members.Count</span>
+        </div>
+    </div>
+
+    @if (_pendingRequests.Any())
+    {
+        <div class="ec-card">
+            <h4 style="font-weight:600;margin:0 0 var(--space-4);">Pending Requests (@_pendingRequests.Count)</h4>
+            <div class="mem-request-list">
+                @foreach (var req in _pendingRequests)
+                {
+                    var user = _allUsers.GetValueOrDefault(req.UserId);
+                    <div class="mem-request-row">
+                        <div class="mem-request-info">
+                            <div class="ec-avatar">@CssClassHelpers.GetInitials(user?.FullName)</div>
+                            <div>
+                                <span class="mem-request-name">@(user?.FullName ?? "Unknown")</span>
+                                <div class="mem-email">@(user?.Email ?? "")</div>
+                            </div>
+                        </div>
+                        <div class="mem-request-actions">
+                            <button class="ec-btn ec-btn-primary ec-btn-sm" @onclick="() => Accept(req.UserId)">Accept</button>
+                            <button class="ec-btn ec-btn-danger ec-btn-sm" @onclick="() => Reject(req.UserId)">Reject</button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    <div class="ec-card">
+        <table class="ec-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var member in _members)
+                {
+                    <tr>
+                        <td>
+                            <div class="mem-name">
+                                <div class="ec-avatar">@CssClassHelpers.GetInitials(member.FullName)</div>
+                                <span>@member.FullName</span>
+                                @if (member.Role == UserRole.Teacher)
+                                {
+                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="#2563EB" stroke="white" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                                }
+                            </div>
+                        </td>
+                        <td class="mem-email">@member.Email</td>
+                        <td>
+                            <span class="ec-badge @(member.Role == UserRole.Teacher ? "ec-badge-primary" : "ec-badge-neutral")">
+                                @(member.Role == UserRole.Teacher ? "Professor" : "Student")
+                            </span>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid ClassRoomId { get; set; }
+    private List<AppUser> _members = new();
+    private List<ClassMember> _pendingRequests = new();
+    private Dictionary<Guid, AppUser> _allUsers = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _members = await DataService.GetMembersAsync(ClassRoomId);
+        _pendingRequests = await DataService.GetPendingRequestsAsync(ClassRoomId);
+        var students = await DataService.GetAllStudentsAsync();
+        _allUsers = students.ToDictionary(s => s.Id);
+    }
+
+    private async Task Accept(Guid userId)
+    {
+        await DataService.AcceptMemberAsync(ClassRoomId, userId);
+        await LoadData();
+    }
+
+    private async Task Reject(Guid userId)
+    {
+        await DataService.RejectMemberAsync(ClassRoomId, userId);
+        await LoadData();
+    }
+}

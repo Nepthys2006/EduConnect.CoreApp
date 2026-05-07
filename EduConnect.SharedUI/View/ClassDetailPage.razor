@@ -1,0 +1,94 @@
+@page "/classes/{ClassId:guid}"
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IAuthService AuthService
+@inject IDataService DataService
+@inject NavigationManager Nav
+
+@if (_class == null)
+{
+    <div class="cd-loading">Loading class...</div>
+}
+else
+{
+<div class="cd-container page-enter">
+    @{
+        var gradients = new[] {
+            "linear-gradient(135deg, #6B21A8, #818CF8, #C4B5FD)",
+            "linear-gradient(135deg, #2563EB, #06B6D4, #34D399)",
+            "linear-gradient(135deg, #10B981, #84CC16, #A3E635)",
+            "linear-gradient(135deg, #F59E0B, #F97316, #FBBF24)"
+        };
+    }
+    <div class="cd-header" style="background: @gradients[_class.GradientIndex % 4];">
+        <div class="cd-header-top">
+            <span class="cd-section-badge">GR@(_class.GradeLevel.Replace("Grade ", ""))-@_class.Section.ToUpper()</span>
+            <button class="ec-btn ec-btn-sm" style="background:rgba(255,255,255,0.25);color:white;border:1px solid rgba(255,255,255,0.5);border-radius:20px;font-size:12px;">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg>
+                Add More Students
+            </button>
+        </div>
+        <h1 class="cd-class-name">@_class.Subject</h1>
+        <p class="cd-class-instructor">Instructor: @_teacherName</p>
+    </div>
+
+    <div class="ec-tabs cd-tabs">
+        @foreach (var tab in _tabs)
+        {
+            <button class="ec-tab @(tab == _activeTab ? "active" : "")" @onclick="() => SetTab(tab)" aria-label="@tab tab">@tab</button>
+        }
+    </div>
+
+    <div class="cd-tab-content">
+        @switch (_activeTab)
+        {
+            case "Announcements":
+                <EduConnect.SharedUI.View.Tabs.AnnouncementsView ClassRoomId="ClassId" />
+                break;
+            case "Content":
+                <EduConnect.SharedUI.View.Tabs.ContentView ClassRoomId="ClassId" />
+                break;
+            case "Assignments":
+                <EduConnect.SharedUI.View.Tabs.AssignmentsView ClassRoomId="ClassId" />
+                break;
+            case "Members":
+                <EduConnect.SharedUI.View.Tabs.MembersView ClassRoomId="ClassId" />
+                break;
+            case "Grades":
+                <EduConnect.SharedUI.View.Tabs.GradesView ClassRoomId="ClassId" />
+                break;
+            case "Messages":
+                <EduConnect.SharedUI.View.Tabs.MessagesView ClassRoomId="ClassId" />
+                break;
+            case "Attendance":
+                <EduConnect.SharedUI.View.Tabs.AttendanceView ClassRoomId="ClassId" />
+                break;
+        }
+    </div>
+</div>
+}
+
+@code {
+    [Parameter] public Guid ClassId { get; set; }
+
+    private ClassRoom? _class;
+    private string _teacherName = "";
+    private string _activeTab = "Announcements";
+    private readonly string[] _tabs = { "Announcements", "Content", "Assignments", "Members", "Grades", "Messages", "Attendance" };
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.CurrentUser == null) { Nav.NavigateTo("/signin"); return; }
+        _class = await DataService.GetClassByIdAsync(ClassId);
+        if (_class != null)
+        {
+            var teacher = await DataService.GetUserByIdAsync(_class.TeacherId);
+            _teacherName = teacher?.FullName ?? "Unknown";
+        }
+    }
+
+    private void SetTab(string tab)
+    {
+        _activeTab = tab;
+    }
+}

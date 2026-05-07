@@ -1,0 +1,135 @@
+@page "/create-account"
+@layout EduConnect.SharedUI.View.Auth.AuthLayout
+@using EduConnect.SharedUI.Services
+@inject IAuthService AuthService
+@inject NavigationManager Nav
+
+<div class="auth-card auth-card--register">
+    <div class="auth-logo">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#2563EB" stroke-width="1.5">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+            <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
+        </svg>
+    </div>
+    <h1 class="auth-title">Create Account</h1>
+
+    @if (!string.IsNullOrEmpty(_error))
+    {
+        <div class="auth-error">@_error</div>
+    }
+
+    <div class="auth-form">
+        <div class="auth-section-label">ACCOUNT DETAILS</div>
+
+        <div class="auth-field">
+            <label class="auth-label" for="reg-email">Email Address</label>
+            <div class="auth-input-wrap">
+                <svg class="auth-input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                <input id="reg-email" type="email" class="ec-input auth-input" placeholder="user@example.com"
+                       @bind="_email" @bind:event="oninput" aria-label="Email address" />
+            </div>
+        </div>
+
+        <div class="auth-field-row">
+            <div class="auth-field">
+                <label class="auth-label" for="reg-pass">Password</label>
+                <div class="auth-input-wrap">
+                    <svg class="auth-input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <input id="reg-pass" type="password" class="ec-input auth-input" placeholder="••••••••"
+                           @bind="_password" @bind:event="oninput" aria-label="Password" />
+                </div>
+            </div>
+            <div class="auth-field">
+                <label class="auth-label" for="reg-confirm">Confirm Password</label>
+                <div class="auth-input-wrap">
+                    <svg class="auth-input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                    <input id="reg-confirm" type="password" class="ec-input auth-input" placeholder="••••••••"
+                           @bind="_confirmPassword" @bind:event="oninput" aria-label="Confirm password" />
+                </div>
+            </div>
+        </div>
+
+        <div class="auth-section-label">YOUR IDENTIFICATION</div>
+
+        <div class="auth-field-row auth-field-row--three">
+            <div class="auth-field">
+                <label class="auth-label" for="reg-last">Last Name</label>
+                <input id="reg-last" type="text" class="ec-input" placeholder="Doe" @bind="_lastName" aria-label="Last name" />
+            </div>
+            <div class="auth-field">
+                <label class="auth-label" for="reg-first">First Name</label>
+                <input id="reg-first" type="text" class="ec-input" placeholder="John" @bind="_firstName" aria-label="First name" />
+            </div>
+            <div class="auth-field">
+                <label class="auth-label" for="reg-middle">Middle Name</label>
+                <input id="reg-middle" type="text" class="ec-input" placeholder="Quincy" @bind="_middleName" aria-label="Middle name" />
+            </div>
+        </div>
+
+        <div class="auth-field">
+            <label class="auth-label" for="reg-lrn">
+                Learner Reference Number (LRN)
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-left: 4px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            </label>
+            <div class="auth-input-wrap">
+                <svg class="auth-input-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <input id="reg-lrn" type="text" class="ec-input auth-input" placeholder="123456789012" maxlength="12"
+                       @bind="_lrn" @bind:event="oninput" aria-label="Learner Reference Number" />
+            </div>
+        </div>
+
+        <div class="auth-info-banner">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            <div>
+                <strong>Note for CEIX Access:</strong><br/>
+                This account will be cross-referenced with regional records to determine your eligibility and resource access.
+            </div>
+        </div>
+
+        <button class="ec-btn ec-btn-primary auth-submit" @onclick="HandleRegister" disabled="@_loading">
+            @if (_loading) { <span class="auth-spinner"></span> }
+            Sign Up
+        </button>
+
+        <p class="auth-footer-text">
+            ALREADY HAVE AN ACCOUNT? <a class="auth-link-inline" @onclick="GoToLogin" style="cursor:pointer;">SIGN IN</a>
+        </p>
+    </div>
+</div>
+
+@code {
+    private string _email = "", _password = "", _confirmPassword = "";
+    private string _lastName = "", _firstName = "", _middleName = "";
+    private string _lrn = "";
+    private string? _error;
+    private bool _loading;
+
+    private async Task HandleRegister()
+    {
+        _error = null;
+        if (string.IsNullOrWhiteSpace(_email) || string.IsNullOrWhiteSpace(_password) ||
+            string.IsNullOrWhiteSpace(_lastName) || string.IsNullOrWhiteSpace(_firstName))
+        {
+            _error = "Please fill in all required fields.";
+            return;
+        }
+        if (_password != _confirmPassword) { _error = "Passwords do not match."; return; }
+        if (!_email.EndsWith("@gmail.com", StringComparison.OrdinalIgnoreCase) &&
+            !_email.EndsWith("@deped.gov.ph", StringComparison.OrdinalIgnoreCase))
+        {
+            _error = "Only @gmail.com or @deped.gov.ph addresses are accepted.";
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            await AuthService.RegisterAsync(_email, _password, _lastName, _firstName, _middleName, string.IsNullOrWhiteSpace(_lrn) ? null : _lrn);
+            Nav.NavigateTo("/");
+        }
+        catch (Exception ex) { _error = ex.Message; }
+        _loading = false;
+    }
+
+    private void GoToLogin() => Nav.NavigateTo("/signin");
+}

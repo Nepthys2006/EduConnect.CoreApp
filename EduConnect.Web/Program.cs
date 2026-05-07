@@ -1,10 +1,15 @@
 using EduConnect.Web.Components;
+using EduConnect.SharedUI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// EduConnect Services
+builder.Services.AddSingleton<IAuthService, MockAuthService>();
+builder.Services.AddSingleton<IDataService, MockDataService>();
 
 var app = builder.Build();
 
@@ -22,6 +27,7 @@ app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
+    .AddInteractiveServerRenderMode()
+    .AddAdditionalAssemblies(typeof(EduConnect.SharedUI.View.DashboardPage).Assembly);
 
 app.Run();

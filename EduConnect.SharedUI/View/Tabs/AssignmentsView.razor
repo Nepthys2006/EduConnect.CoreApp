@@ -1,0 +1,58 @@
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IDataService DataService
+
+<div class="asn-container">
+    <div class="asn-header">
+        <span class="asn-count">@_assignments.Count TOTAL TASKS</span>
+        <button class="ec-btn ec-btn-primary ec-btn-sm">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Add Assignment
+        </button>
+    </div>
+
+    <div class="asn-list">
+        @foreach (var asn in _assignments)
+        {
+            var (iconClass, icon) = GetTypeInfo(asn.Type);
+            <div class="ec-card asn-row">
+                <div class="asn-icon @iconClass">@icon</div>
+                <div class="asn-info">
+                    <h4 class="asn-title">@asn.Title</h4>
+                    <p class="asn-desc">@asn.Description</p>
+                </div>
+                <div class="asn-meta">
+                    <span>Due @asn.DueDate.ToString("MMM d, yyyy")</span>
+                    <span>@asn.MaxPoints pts</span>
+                </div>
+                @if (asn.Status == AssignmentStatus.Pending)
+                {
+                    <span class="ec-badge ec-badge-warning">Pending</span>
+                }
+                <button class="ec-btn ec-btn-secondary ec-btn-sm">View Details</button>
+                <button class="ec-icon-btn" aria-label="More options">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+                </button>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid ClassRoomId { get; set; }
+    private List<Assignment> _assignments = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _assignments = await DataService.GetAssignmentsAsync(ClassRoomId);
+    }
+
+    private (string cssClass, MarkupString icon) GetTypeInfo(AssignmentType type) => type switch
+    {
+        AssignmentType.ProblemSet => ("asn-type-blue", (MarkupString)"<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2'><polyline points='16 18 22 12 16 6'/><polyline points='8 6 2 12 8 18'/></svg>"),
+        AssignmentType.Quiz => ("asn-type-purple", (MarkupString)"<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/><line x1='16' y1='17' x2='8' y2='17'/></svg>"),
+        AssignmentType.ResearchPaper => ("asn-type-orange", (MarkupString)"<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2'><path d='M12 19l7-7 3 3-7 7-3-3z'/><path d='M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z'/><path d='M2 2l7.586 7.586'/><circle cx='11' cy='11' r='2'/></svg>"),
+        AssignmentType.Activity => ("asn-type-teal", (MarkupString)"<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/><polyline points='14 2 14 8 20 8'/></svg>"),
+        _ => ("asn-type-blue", (MarkupString)"<svg viewBox='0 0 24 24' width='20' height='20' fill='none' stroke='currentColor' stroke-width='2'><path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/></svg>")
+    };
+}

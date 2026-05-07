@@ -1,0 +1,148 @@
+@page "/calendar"
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IAuthService AuthService
+@inject IDataService DataService
+@inject NavigationManager Nav
+
+<div class="cal-container page-enter">
+    <div class="cal-header">
+        <h1 class="cal-title">Calendar</h1>
+        <button class="ec-btn ec-btn-primary ec-btn-sm">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            Add Assignment
+        </button>
+    </div>
+
+    <div class="cal-grid">
+        <div class="cal-main ec-card">
+            <div class="cal-toolbar">
+                <button class="ec-icon-btn" @onclick="PrevMonth" aria-label="Previous month">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <h3 class="cal-month">@_currentMonth.ToString("MMMM yyyy")</h3>
+                <button class="ec-icon-btn" @onclick="NextMonth" aria-label="Next month">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+                <button class="ec-btn ec-btn-secondary ec-btn-sm" style="margin-left:auto;" @onclick="GoToday">Today</button>
+            </div>
+            <div class="cal-weekdays">
+                @foreach (var d in new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" })
+                {
+                    <div class="cal-weekday">@d</div>
+                }
+            </div>
+            <div class="cal-days">
+                @foreach (var cell in _cells)
+                {
+                    var isToday = cell.Date == DateOnly.FromDateTime(DateTime.Today);
+                    var isMuted = cell.Date.Month != _currentMonth.Month;
+                    <div class="cal-day @(isMuted ? "cal-day-muted" : "") @(isToday ? "cal-day-today" : "")">
+                        <span class="cal-day-num">@cell.Date.Day</span>
+                        <div class="cal-day-events">
+                            @foreach (var ev in cell.Events.Take(3))
+                            {
+                                <div class="cal-event-chip" style="background:@ev.Color;">@ev.Title</div>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="cal-side">
+            <div class="ec-card cal-panel">
+                <h4 class="cal-panel-title">Upcoming Grading</h4>
+                <div class="cal-deadline-list">
+                    @foreach (var todo in _todos)
+                    {
+                        <div class="cal-deadline">
+                            <div class="cal-deadline-info">
+                                <span class="cal-deadline-name">@todo.Title</span>
+                                <span class="cal-deadline-date">@todo.DueDate.ToString("MMM d") · @todo.SubmittedCount items</span>
+                            </div>
+                            <span class="ec-badge @CssClassHelpers.GetDueBadgeClass(todo.DueDate)">@GetUrgency(todo.DueDate)</span>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="ec-card cal-panel">
+                <h4 class="cal-panel-title">Recent Submissions</h4>
+                <div class="cal-submission-list">
+                    @foreach (var act in _recentSubs.Take(5))
+                    {
+                        <div class="cal-submission">
+                            <div class="ec-avatar" style="width:28px;height:28px;font-size:11px;">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                            </div>
+                            <div class="cal-submission-info">
+                                <span class="cal-submission-name">@act.Title</span>
+                                <span class="cal-submission-meta">@act.TimeAgo</span>
+                            </div>
+                            @if (act.Timestamp > DateTime.UtcNow.AddHours(-6))
+                            {
+                                <span class="ec-badge ec-badge-primary" style="font-size:10px;">New</span>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private DateTime _currentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private List<CalendarCell> _cells = new();
+    private List<CalendarEvent> _events = new();
+    private List<TodoItem> _todos = new();
+    private List<ActivityItem> _recentSubs = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthService.CurrentUser == null) { Nav.NavigateTo("/signin"); return; }
+        _todos = await DataService.GetTodoItemsAsync(AuthService.CurrentUser.Id);
+        var activities = await DataService.GetActivityFeedAsync(AuthService.CurrentUser.Id);
+        _recentSubs = activities.Where(a => a.Category == "Submission").ToList();
+        await LoadMonth();
+    }
+
+    private async Task LoadMonth()
+    {
+        _events = await DataService.GetEventsAsync(AuthService.CurrentUser!.Id, _currentMonth.Year, _currentMonth.Month);
+        BuildCells();
+    }
+
+    private void BuildCells()
+    {
+        _cells.Clear();
+        var first = new DateOnly(_currentMonth.Year, _currentMonth.Month, 1);
+        var start = first.AddDays(-(int)first.DayOfWeek);
+        for (int i = 0; i < 42; i++)
+        {
+            var d = start.AddDays(i);
+            _cells.Add(new CalendarCell
+            {
+                Date = d,
+                Events = _events.Where(e => DateOnly.FromDateTime(e.Start) == d).ToList()
+            });
+        }
+    }
+
+    private async Task PrevMonth() { _currentMonth = _currentMonth.AddMonths(-1); await LoadMonth(); }
+    private async Task NextMonth() { _currentMonth = _currentMonth.AddMonths(1); await LoadMonth(); }
+    private async Task GoToday() { _currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1); await LoadMonth(); }
+
+    private string GetUrgency(DateTime dt)
+    {
+        var days = (dt.Date - DateTime.Today).TotalDays;
+        return days <= 0 ? "Urgent" : days <= 2 ? "Pending" : "Stable";
+    }
+
+    private record CalendarCell
+    {
+        public DateOnly Date { get; init; }
+        public List<CalendarEvent> Events { get; init; } = new();
+    }
+}

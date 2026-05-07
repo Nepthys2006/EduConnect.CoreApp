@@ -1,0 +1,22 @@
+@inherits LayoutComponentBase
+
+<div class="auth-layout">
+    <header class="auth-topbar">
+        <div class="auth-brand">
+            <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="#2563EB" stroke-width="2">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                <path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5"/>
+            </svg>
+            <span class="auth-brand-name">EduConnect</span>
+        </div>
+        <span class="auth-brand-tagline">Teach. Learn. Connect.</span>
+        <span class="auth-brand-portal">EduConnect Portal</span>
+    </header>
+
+    <div class="auth-bg">
+        <div class="auth-bg-overlay"></div>
+        <div class="auth-content">
+            @Body
+        </div>
+    </div>
+</div>

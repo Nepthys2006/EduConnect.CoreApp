@@ -1,0 +1,160 @@
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IDataService DataService
+
+<div class="att-container">
+    <div class="ec-card att-calendar">
+        <div class="att-cal-header">
+            <button class="ec-icon-btn" @onclick="PrevMonth" aria-label="Previous month">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <h3 class="att-cal-title">@_currentMonth.ToString("MMMM yyyy")</h3>
+            <button class="ec-icon-btn" @onclick="NextMonth" aria-label="Next month">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+        </div>
+        <div class="att-cal-grid">
+            @foreach (var day in new[] { "Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun" })
+            {
+                <div class="att-cal-weekday">@day</div>
+            }
+            @foreach (var cell in _calendarCells)
+            {
+                var isToday = cell.Date == DateOnly.FromDateTime(DateTime.Today);
+                var isSelected = cell.Date == _selectedDate;
+                var isMuted = cell.Date.Month != _currentMonth.Month;
+                <div class="att-cal-day @(isMuted ? "att-cal-muted" : "") @(isToday ? "att-cal-today" : "") @(isSelected ? "att-cal-selected" : "")"
+                     @onclick="() => SelectDate(cell.Date)" role="button" tabindex="0">
+                    <span class="att-cal-daynum">@cell.Date.Day</span>
+                    @if (cell.HasData && !isMuted)
+                    {
+                        <span class="att-cal-dot"></span>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="ec-card att-roster">
+        <div class="att-roster-header">
+            <div class="att-date-selector">
+                <label class="td-label">Attendance for</label>
+                <strong>@_selectedDate.ToString("MMMM d, yyyy")</strong>
+            </div>
+        </div>
+
+        <table class="ec-table">
+            <thead>
+                <tr>
+                    <th>Student</th>
+                    <th>LRN#</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in _rosterStudents)
+                {
+                    var record = _dayRecords.FirstOrDefault(r => r.StudentId == student.Id);
+                    var status = record?.Status;
+                    <tr>
+                        <td>
+                            <div style="display:flex;align-items:center;gap:var(--space-2);">
+                                <div class="ec-avatar">@CssClassHelpers.GetInitials(student.FullName)</div>
+                                @student.FullName
+                            </div>
+                        </td>
+                        <td style="font-family:monospace;font-size:12px;">@(student.LRN ?? "—")</td>
+                        <td>
+                            @if (status.HasValue)
+                            {
+                                <span class="ec-badge @GetAttBadge(status.Value)">@status.Value</span>
+                            }
+                            else
+                            {
+                                <span style="color:var(--color-text-tertiary);">—</span>
+                            }
+                        </td>
+                        <td>
+                            <div style="display:flex;gap:var(--space-1);">
+                                <button class="ec-btn ec-btn-sm @(status == AttendanceStatus.Present ? "ec-btn-primary" : "ec-btn-secondary")"
+                                        @onclick="() => Mark(student.Id, AttendanceStatus.Present)" aria-label="Mark present">✓</button>
+                                <button class="ec-btn ec-btn-sm @(status == AttendanceStatus.Absent ? "ec-btn-danger" : "ec-btn-secondary")"
+                                        @onclick="() => Mark(student.Id, AttendanceStatus.Absent)" aria-label="Mark absent">✕</button>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid ClassRoomId { get; set; }
+
+    private DateOnly _selectedDate = DateOnly.FromDateTime(DateTime.Today);
+    private DateTime _currentMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private List<CalendarCell> _calendarCells = new();
+    private List<AttendanceRecord> _dayRecords = new();
+    private List<AppUser> _rosterStudents = new();
+    private HashSet<DateOnly> _attendanceDates = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var dates = await DataService.GetAttendanceDatesAsync(ClassRoomId);
+        _attendanceDates = dates.ToHashSet();
+        _rosterStudents = await DataService.GetMembersAsync(ClassRoomId);
+        _rosterStudents = _rosterStudents.Where(m => m.Role == UserRole.Student).ToList();
+        BuildCalendar();
+        await LoadDay();
+    }
+
+    private void BuildCalendar()
+    {
+        _calendarCells.Clear();
+        var first = new DateOnly(_currentMonth.Year, _currentMonth.Month, 1);
+        var startOfWeek = first.AddDays(-(((int)first.DayOfWeek + 6) % 7));
+        for (int i = 0; i < 42; i++)
+        {
+            var d = startOfWeek.AddDays(i);
+            _calendarCells.Add(new CalendarCell { Date = d, HasData = _attendanceDates.Contains(d) });
+        }
+    }
+
+    private async Task SelectDate(DateOnly date)
+    {
+        _selectedDate = date;
+        await LoadDay();
+    }
+
+    private async Task LoadDay()
+    {
+        _dayRecords = await DataService.GetAttendanceAsync(ClassRoomId, _selectedDate);
+    }
+
+    private async Task Mark(Guid studentId, AttendanceStatus status)
+    {
+        await DataService.RecordAttendanceAsync(new AttendanceRecord
+        {
+            ClassRoomId = ClassRoomId,
+            StudentId = studentId,
+            Date = _selectedDate,
+            Status = status
+        });
+        await LoadDay();
+    }
+
+    private void PrevMonth() { _currentMonth = _currentMonth.AddMonths(-1); BuildCalendar(); }
+    private void NextMonth() { _currentMonth = _currentMonth.AddMonths(1); BuildCalendar(); }
+
+    private string GetAttBadge(AttendanceStatus s) => s switch
+    {
+        AttendanceStatus.Present => "ec-badge-success",
+        AttendanceStatus.Absent => "ec-badge-danger",
+        AttendanceStatus.Excused => "ec-badge-neutral",
+        _ => "ec-badge-neutral"
+    };
+
+    private record CalendarCell { public DateOnly Date { get; init; } public bool HasData { get; init; } }
+}

@@ -1,0 +1,141 @@
+@page "/profile"
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IAuthService AuthService
+@inject NavigationManager Nav
+
+<div class="prof-container page-enter">
+    @if (AuthService.CurrentUser == null)
+    {
+        <div class="td-empty">Not logged in</div>
+    }
+    else
+    {
+        var user = AuthService.CurrentUser;
+        <div class="ec-card prof-header">
+            <div class="prof-avatar-wrap">
+                <div class="ec-avatar ec-avatar-xl">@CssClassHelpers.GetInitials(user.FullName)</div>
+                <button class="prof-avatar-edit" aria-label="Edit avatar">
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+            </div>
+            <h2 class="prof-name">@user.FullName</h2>
+            <div class="prof-meta">
+                <span class="prof-email">@user.Email</span>
+                <span class="ec-badge @(user.Role == UserRole.Teacher ? "ec-badge-primary" : "ec-badge-neutral")">@user.Role</span>
+            </div>
+        </div>
+
+        <div class="prof-grid">
+            <div class="prof-col">
+                <div class="ec-card">
+                    <div class="prof-card-header">
+                        <h3 class="prof-card-title">Basic Information</h3>
+                        <button class="ec-btn ec-btn-secondary ec-btn-sm" @onclick="() => _editing = !_editing">
+                            @(_editing ? "Cancel" : "Edit Details")
+                        </button>
+                    </div>
+                    <div class="prof-fields">
+                        <div class="prof-field">
+                            <span class="prof-label">Full Name</span>
+                            @if (_editing)
+                            {
+                                <input class="ec-input" @bind="user.FullName" />
+                            }
+                            else
+                            {
+                                <span class="prof-value">@user.FullName</span>
+                            }
+                        </div>
+                        <div class="prof-field">
+                            <span class="prof-label">Email Address</span>
+                            <span class="prof-value">@user.Email</span>
+                        </div>
+                        <div class="prof-field">
+                            <span class="prof-label">@(user.Role == UserRole.Teacher ? "Staff ID" : "LRN#")</span>
+                            <span class="prof-value" style="font-family:monospace;">@(user.Role == UserRole.Teacher ? user.StaffId : user.LRN ?? "—")</span>
+                        </div>
+                        <div class="prof-field">
+                            <span class="prof-label">Password</span>
+                            <span class="prof-value">•••••••• <a class="prof-link" href="#">Change password</a></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="prof-col">
+                <div class="ec-card">
+                    <div class="prof-card-header">
+                        <h3 class="prof-card-title">Additional Information</h3>
+                    </div>
+                    <div class="prof-fields">
+                        <div class="prof-fields-row">
+                            <div class="prof-field">
+                                <span class="prof-label">Gender</span>
+                                @if (_editing)
+                                {
+                                    <select class="ec-input" @bind="user.Gender"><option value="">—</option><option>Male</option><option>Female</option><option>Other</option></select>
+                                }
+                                else
+                                {
+                                    <span class="prof-value">@(user.Gender ?? "—")</span>
+                                }
+                            </div>
+                            <div class="prof-field">
+                                <span class="prof-label">Birthday</span>
+                                <span class="prof-value">@(user.Birthday?.ToString("MMM d, yyyy") ?? "—")</span>
+                            </div>
+                        </div>
+                        <div class="prof-field">
+                            <span class="prof-label">Education Level</span>
+                            <span class="prof-value">@(user.EducationLevel ?? "—")</span>
+                        </div>
+                        <div class="prof-field">
+                            <span class="prof-label">Website</span>
+                            <span class="prof-value">@(user.Website ?? "—") <a class="prof-link" href="#">+ add</a></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="ec-card">
+                    <div class="prof-card-header">
+                        <h3 class="prof-card-title">Contact Information</h3>
+                    </div>
+                    <div class="prof-fields">
+                        <div class="prof-field">
+                            <span class="prof-label">Mailing Address</span>
+                            @if (_editing)
+                            {
+                                <input class="ec-input" @bind="user.MailingAddress" />
+                            }
+                            else
+                            {
+                                <span class="prof-value">@(user.MailingAddress ?? "—")</span>
+                            }
+                        </div>
+                        <div class="prof-field">
+                            <span class="prof-label">Phone Number</span>
+                            @if (_editing)
+                            {
+                                <input class="ec-input" @bind="user.PhoneNumber" />
+                            }
+                            else
+                            {
+                                <span class="prof-value">@(user.PhoneNumber ?? "—")</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool _editing;
+
+    protected override void OnInitialized()
+    {
+        if (AuthService.CurrentUser == null) Nav.NavigateTo("/signin");
+    }
+}

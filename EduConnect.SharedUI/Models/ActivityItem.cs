@@ -1,29 +1,23 @@
-using System;
-using System.ComponentModel.DataAnnotations;
+namespace EduConnect.SharedUI.Models;
 
-namespace EduConnect.SharedUI.Models
+public class ActivityItem
 {
-    public class ActivityItem
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Category { get; set; } = string.Empty;
+    public DateTime Timestamp { get; set; }
+    public string IconType { get; set; } = "info";
+
+    public string TimeAgo
     {
-        [Required]
-        [MaxLength(36)]
-        public string ActivityId { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(200)]
-        public string Title { get; set; } = string.Empty;
-
-        [Required]
-        [MaxLength(50)]
-        public string Category { get; set; } = string.Empty;
-
-        [MaxLength(50)]
-        public string? IconName { get; set; }
-
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        public bool IsRead { get; set; }
-
-        [MaxLength(36)]
-        public string? RelatedClassId { get; set; }
+        get
+        {
+            var diff = DateTime.UtcNow - Timestamp;
+            if (diff.TotalMinutes < 1) return "Just now";
+            if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes} min ago";
+            if (diff.TotalHours < 24) return $"{(int)diff.TotalHours} hours ago";
+            if (diff.TotalDays < 7) return $"{(int)diff.TotalDays} days ago";
+            return Timestamp.ToString("MMM d, yyyy");
+        }
     }
 }

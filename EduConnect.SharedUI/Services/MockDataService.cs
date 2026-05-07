@@ -1,322 +1,456 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using EduConnect.SharedUI.Models;
 
-namespace EduConnect.SharedUI.Services
+namespace EduConnect.SharedUI.Services;
+
+public class MockDataService : IDataService
 {
-    public class MockDataService : IDataService
+    private readonly MockAuthService _authService;
+    private readonly List<ClassRoom> _classes = new();
+    private readonly List<Assignment> _assignments = new();
+    private readonly List<Submission> _submissions = new();
+    private readonly List<Announcement> _announcements = new();
+    private readonly List<ContentModule> _modules = new();
+    private readonly List<AttendanceRecord> _attendance = new();
+    private readonly List<Message> _messages = new();
+    private readonly List<Conversation> _conversations = new();
+    private readonly List<CalendarEvent> _events = new();
+    private readonly List<ActivityItem> _activities = new();
+    private readonly List<TodoItem> _todos = new();
+
+    public MockDataService(IAuthService authService)
     {
-        private static readonly List<string> GradientPresets = new()
+        _authService = (MockAuthService)authService;
+        SeedData();
+    }
+
+    private void SeedData()
+    {
+        var profAlex = Guid.Parse("a1111111-1111-1111-1111-111111111111");
+        var drJane = Guid.Parse("a2222222-2222-2222-2222-222222222222");
+        var marcus = Guid.Parse("b1111111-1111-1111-1111-111111111111");
+        var sarah = Guid.Parse("b2222222-2222-2222-2222-222222222222");
+        var allStudents = _authService.GetAllUsers().Where(u => u.Role == UserRole.Student).ToList();
+
+        // Classes
+        var csClass = new ClassRoom
         {
-            "#6366F1,#818CF8", "#2563EB,#06B6D4", "#0EA5E9,#34D399",
-            "#10B981,#A3E635", "#F59E0B,#F97316", "#EF4444,#EC4899"
+            Id = Guid.Parse("c1111111-1111-1111-1111-111111111111"),
+            Subject = "Introduction to Computer Science",
+            GradeLevel = "Grade 10",
+            Section = "Einstein",
+            SchoolYear = "2025-2026",
+            TeacherId = drJane,
+            GradientIndex = 0,
+            StartTime = "08:00 AM",
+            EndTime = "09:30 AM",
+            Members = allStudents.Take(30).Select(s => new ClassMember
+            {
+                UserId = s.Id,
+                ClassRoomId = Guid.Parse("c1111111-1111-1111-1111-111111111111"),
+                Status = MemberStatus.Active
+            }).ToList()
         };
 
-        private readonly List<User> _users;
-        private readonly List<Class> _classes;
-        private readonly List<Assignment> _assignments;
-        private readonly List<Member> _members;
-        private readonly List<Announcement> _announcements;
-        private readonly List<Folder> _folders;
-        private readonly List<AttendanceRecord> _attendance;
-        private readonly List<Conversation> _conversations;
-        private readonly List<Message> _messages;
-        private readonly List<ActivityItem> _activities;
-        private readonly List<CalendarEvent> _calendarEvents;
-        private readonly List<Submission> _submissions;
-        private readonly List<JoinRequest> _joinRequests;
-
-        private readonly string _currentTeacherId = "teacher-001";
-        private int _idCounter = 100;
-
-        public MockDataService()
+        var physicsPlato = new ClassRoom
         {
-            _users = new List<User>
+            Id = Guid.Parse("c2222222-2222-2222-2222-222222222222"),
+            Subject = "Intro to Particle Physics",
+            GradeLevel = "Grade 9",
+            Section = "Plato",
+            SchoolYear = "2025-2026",
+            TeacherId = profAlex,
+            GradientIndex = 1,
+            StartTime = "04:00 PM",
+            EndTime = "05:30 PM",
+            Members = allStudents.Skip(5).Take(28).Select(s => new ClassMember
             {
-                new() { Id = "teacher-001", Name = "Maria Santos", Email = "m.santos@deped.gov.ph", Role = "Teacher", LearnerReferenceNumber = null, AvatarUrl = null },
-                new() { Id = "student-001", Name = "Juan Dela Cruz", Email = "juan.cruz@gmail.com", Role = "Student", LearnerReferenceNumber = 123456789012L, AvatarUrl = null },
-                new() { Id = "student-002", Name = "Maria Clara", Email = "maria.clara@gmail.com", Role = "Student", LearnerReferenceNumber = 123456789013L, AvatarUrl = null },
-                new() { Id = "student-003", Name = "Jose Rizal", Email = "jose.rizal@gmail.com", Role = "Student", LearnerReferenceNumber = 123456789014L, AvatarUrl = null },
-                new() { Id = "student-004", Name = "Andres Bonifacio", Email = "andres.bonifacio@gmail.com", Role = "Student", LearnerReferenceNumber = 123456789015L, AvatarUrl = null },
-                new() { Id = "student-005", Name = "Gabriela Silang", Email = "gabriela.silang@gmail.com", Role = "Student", LearnerReferenceNumber = 123456789016L, AvatarUrl = null },
-                new() { Id = "student-006", Name = "Lapu-Lapu", Email = "lapulapu@gmail.com", Role = "Student", LearnerReferenceNumber = 123456789017L, AvatarUrl = null },
-            };
+                UserId = s.Id,
+                ClassRoomId = Guid.Parse("c2222222-2222-2222-2222-222222222222"),
+                Status = MemberStatus.Active
+            }).ToList()
+        };
 
-            _classes = new List<Class>
+        var physicsEinstein = new ClassRoom
+        {
+            Id = Guid.Parse("c3333333-3333-3333-3333-333333333333"),
+            Subject = "Intro to Particle Physics",
+            GradeLevel = "Grade 10",
+            Section = "Einstein",
+            SchoolYear = "2025-2026",
+            TeacherId = profAlex,
+            GradientIndex = 2,
+            StartTime = "04:00 PM",
+            EndTime = "05:30 PM",
+            Members = allStudents.Take(25).Select(s => new ClassMember
             {
-                new() { ClassId = "class-001", Subject = "Mathematics 9", Grade = "9", Section = "Plato", SchoolYear = "2025-2026", InstructorId = "teacher-001", CreatedAt = DateTime.UtcNow.AddDays(-30) },
-                new() { ClassId = "class-002", Subject = "Science 10", Grade = "10", Section = "Aristotle", SchoolYear = "2025-2026", InstructorId = "teacher-001", CreatedAt = DateTime.UtcNow.AddDays(-28) },
-                new() { ClassId = "class-003", Subject = "English 8", Grade = "8", Section = "Socrates", SchoolYear = "2025-2026", InstructorId = "teacher-001", CreatedAt = DateTime.UtcNow.AddDays(-25) },
-                new() { ClassId = "class-004", Subject = "Filipino 7", Grade = "7", Section = "Homer", SchoolYear = "2025-2026", InstructorId = "teacher-001", CreatedAt = DateTime.UtcNow.AddDays(-20) },
-            };
+                UserId = s.Id,
+                ClassRoomId = Guid.Parse("c3333333-3333-3333-3333-333333333333"),
+                Status = MemberStatus.Active
+            }).ToList()
+        };
 
-            _members = new List<Member>
+        var physicsArchimedes = new ClassRoom
+        {
+            Id = Guid.Parse("c4444444-4444-4444-4444-444444444444"),
+            Subject = "Intro to Particle Physics",
+            GradeLevel = "Grade 9",
+            Section = "Archimedes",
+            SchoolYear = "2025-2026",
+            TeacherId = profAlex,
+            GradientIndex = 3,
+            StartTime = "04:00 PM",
+            EndTime = "05:30 PM",
+            Members = allStudents.Skip(10).Take(26).Select(s => new ClassMember
             {
-                new() { MemberId = "m-001", UserId = "teacher-001", ClassId = "class-001", Role = "Teacher", JoinedDate = DateTime.UtcNow.AddDays(-30) },
-                new() { MemberId = "m-002", UserId = "student-001", ClassId = "class-001", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-28) },
-                new() { MemberId = "m-003", UserId = "student-002", ClassId = "class-001", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-27) },
-                new() { MemberId = "m-004", UserId = "student-003", ClassId = "class-001", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-26) },
-                new() { MemberId = "m-005", UserId = "teacher-001", ClassId = "class-002", Role = "Teacher", JoinedDate = DateTime.UtcNow.AddDays(-28) },
-                new() { MemberId = "m-006", UserId = "student-001", ClassId = "class-002", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-26) },
-                new() { MemberId = "m-007", UserId = "student-004", ClassId = "class-002", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-25) },
-                new() { MemberId = "m-008", UserId = "student-005", ClassId = "class-002", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-24) },
-                new() { MemberId = "m-009", UserId = "teacher-001", ClassId = "class-003", Role = "Teacher", JoinedDate = DateTime.UtcNow.AddDays(-25) },
-                new() { MemberId = "m-010", UserId = "student-002", ClassId = "class-003", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-23) },
-                new() { MemberId = "m-011", UserId = "student-006", ClassId = "class-003", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-22) },
-                new() { MemberId = "m-012", UserId = "teacher-001", ClassId = "class-004", Role = "Teacher", JoinedDate = DateTime.UtcNow.AddDays(-20) },
-                new() { MemberId = "m-013", UserId = "student-003", ClassId = "class-004", Role = "Student", JoinedDate = DateTime.UtcNow.AddDays(-18) },
-            };
+                UserId = s.Id,
+                ClassRoomId = Guid.Parse("c4444444-4444-4444-4444-444444444444"),
+                Status = MemberStatus.Active
+            }).ToList()
+        };
 
-            _assignments = new List<Assignment>
-            {
-                new() { AssignmentId = "a-001", ClassId = "class-001", AssignmentTitle = "Algebraic Expressions Worksheet", AssignmentDescription = "Solve problems 1-20 on page 45 of your textbook.", DueDate = DateTime.UtcNow.Date.AddHours(23), TotalPoints = 50, AssignmentType = "Code", AssignmentStatus = "Ongoing", AssignedDate = DateTime.UtcNow.AddDays(-3) },
-                new() { AssignmentId = "a-002", ClassId = "class-001", AssignmentTitle = "Quadratic Formula Quiz", AssignmentDescription = "15-minute timed quiz on solving quadratic equations.", DueDate = DateTime.UtcNow.Date.AddDays(1).AddHours(10), TotalPoints = 30, AssignmentType = "Quiz", AssignmentStatus = "Ongoing", AssignedDate = DateTime.UtcNow.AddDays(-2) },
-                new() { AssignmentId = "a-003", ClassId = "class-002", AssignmentTitle = "Lab Report: Photosynthesis", AssignmentDescription = "Write a complete lab report following the scientific method.", DueDate = DateTime.UtcNow.Date.AddDays(3).AddHours(15), TotalPoints = 100, AssignmentType = "Essay", AssignmentStatus = "Pending", AssignedDate = DateTime.UtcNow.AddDays(-1) },
-                new() { AssignmentId = "a-004", ClassId = "class-002", AssignmentTitle = "Cell Structure Diagram", AssignmentDescription = "Draw and label a plant and animal cell diagram.", DueDate = DateTime.UtcNow.Date.AddDays(5).AddHours(9), TotalPoints = 40, AssignmentType = "Project", AssignmentStatus = "Pending", AssignedDate = DateTime.UtcNow.AddDays(-1) },
-                new() { AssignmentId = "a-005", ClassId = "class-003", AssignmentTitle = "Essay: Philippine Literature", AssignmentDescription = "500-word essay on the impact of Noli Me Tangere.", DueDate = DateTime.UtcNow.Date.AddDays(2).AddHours(14), TotalPoints = 75, AssignmentType = "Essay", AssignmentStatus = "Ongoing", AssignedDate = DateTime.UtcNow.AddDays(-4) },
-            };
+        // Add pending requests
+        physicsEinstein.Members.Add(new ClassMember { UserId = allStudents.Last().Id, ClassRoomId = physicsEinstein.Id, Status = MemberStatus.Pending });
+        csClass.Members.Add(new ClassMember { UserId = allStudents[^2].Id, ClassRoomId = csClass.Id, Status = MemberStatus.Pending });
 
-            _submissions = new List<Submission>
-            {
-                new() { SubmissionId = "s-001", AssignmentId = "a-001", StudentId = "student-001", Score = 45, FileUrl = "worksheet_juan.pdf", FileName = "worksheet_juan.pdf", SubmittedAt = DateTime.UtcNow.AddDays(-1) },
-                new() { SubmissionId = "s-002", AssignmentId = "a-001", StudentId = "student-002", Score = null, FileUrl = "worksheet_maria.pdf", FileName = "worksheet_maria.pdf", SubmittedAt = DateTime.UtcNow.AddDays(-1).AddHours(-2) },
-                new() { SubmissionId = "s-003", AssignmentId = "a-001", StudentId = "student-003", Score = null, FileUrl = null, FileName = null, SubmittedAt = null },
-                new() { SubmissionId = "s-004", AssignmentId = "a-001", StudentId = "student-004", Score = 48, FileUrl = "worksheet_andres.pdf", FileName = "worksheet_andres.pdf", SubmittedAt = DateTime.UtcNow.AddDays(-2) },
-                new() { SubmissionId = "s-005", AssignmentId = "a-002", StudentId = "student-001", Score = null, FileUrl = null, FileName = null, SubmittedAt = null },
-                new() { SubmissionId = "s-006", AssignmentId = "a-003", StudentId = "student-001", Score = null, FileUrl = "lab_juan.pdf", FileName = "lab_juan.pdf", SubmittedAt = DateTime.UtcNow.AddHours(-3) },
-            };
+        _classes.AddRange(new[] { csClass, physicsPlato, physicsEinstein, physicsArchimedes });
 
-            _announcements = new List<Announcement>
-            {
-                new() { AnnouncementId = "ann-001", ClassId = "class-001", AnnouncementAuthorId = "teacher-001", AnnouncementTitle = "Midterm Exam Schedule", AnnouncementDescription = "The midterm exam will be held next Monday at 8:00 AM. Please bring a scientific calculator and two sheets of bond paper.", AnnouncementDate = DateTime.UtcNow.AddDays(-2), Attachments = null },
-                new() { AnnouncementId = "ann-002", ClassId = "class-001", AnnouncementAuthorId = "teacher-001", AnnouncementTitle = "Assignment #3 Clarification", AnnouncementDescription = "For question 12, please use the quadratic formula method instead of factoring. The answer key has been updated.", AnnouncementDate = DateTime.UtcNow.AddDays(-1), Attachments = "answer_key.pdf" },
-                new() { AnnouncementId = "ann-003", ClassId = "class-002", AnnouncementAuthorId = "teacher-001", AnnouncementTitle = "Lab Safety Reminder", AnnouncementDescription = "Remember to wear your lab coats and safety goggles during tomorrow's experiment session.", AnnouncementDate = DateTime.UtcNow.AddHours(-5), Attachments = null },
-            };
+        // Assignments for CS class
+        _assignments.AddRange(new[]
+        {
+            new Assignment { Id = Guid.NewGuid(), ClassRoomId = csClass.Id, Title = "Problem Set 1: C Basics", Description = "Complete exercises on variables, loops, and conditionals in C.", Type = AssignmentType.ProblemSet, DueDate = new DateTime(2025, 10, 15), MaxPoints = 100, Status = AssignmentStatus.Active },
+            new Assignment { Id = Guid.NewGuid(), ClassRoomId = csClass.Id, Title = "Week 4 Quiz: Data Structures", Description = "Multiple choice and short answer on arrays, linked lists, and stacks.", Type = AssignmentType.Quiz, DueDate = new DateTime(2025, 10, 22), MaxPoints = 50, Status = AssignmentStatus.Active },
+            new Assignment { Id = Guid.NewGuid(), ClassRoomId = csClass.Id, Title = "Research Paper: History of AI", Description = "A 2000-word paper on the evolution of artificial intelligence from Turing to modern transformers.", Type = AssignmentType.ResearchPaper, DueDate = new DateTime(2025, 10, 10), MaxPoints = 200, Status = AssignmentStatus.Active },
+            new Assignment { Id = Guid.NewGuid(), ClassRoomId = csClass.Id, Title = "Problem Set 2: Memory Management", Description = "Exercises covering pointers, dynamic allocation, and memory leaks in C.", Type = AssignmentType.ProblemSet, DueDate = new DateTime(2025, 11, 1), MaxPoints = 150, Status = AssignmentStatus.Pending },
+            new Assignment { Id = Guid.NewGuid(), ClassRoomId = csClass.Id, Title = "Midterm Preparation Quiz", Description = "Comprehensive review quiz covering Weeks 1-6 material.", Type = AssignmentType.Quiz, DueDate = new DateTime(2025, 11, 5), MaxPoints = 100, Status = AssignmentStatus.Pending },
+        });
 
-            _folders = new List<Folder>
+        // Submissions for first assignment
+        var firstAssignment = _assignments[0];
+        foreach (var member in csClass.Members.Where(m => m.Status == MemberStatus.Active).Take(24))
+        {
+            _submissions.Add(new Submission
             {
-                new() { FolderId = "f-001", ClassId = "class-001", FolderName = "Module 1: Number Systems", Description = "Introduction to real numbers, rational and irrational numbers.", ItemIds = new List<string> { "slide1.pdf", "handout1.pdf" } },
-                new() { FolderId = "f-002", ClassId = "class-001", FolderName = "Module 2: Algebraic Expressions", Description = "Variables, constants, and algebraic terms.", ItemIds = new List<string> { "slide2.pdf", "worksheet2.docx" } },
-                new() { FolderId = "f-003", ClassId = "class-002", FolderName = "Module 1: Cell Biology", Description = "Structure and function of cell organelles.", ItemIds = new List<string> { "cell_diagram.png", "notes.pdf" } },
-            };
+                Id = Guid.NewGuid(),
+                AssignmentId = firstAssignment.Id,
+                StudentId = member.UserId,
+                SubmittedAt = firstAssignment.DueDate.AddDays(-Random.Shared.Next(0, 5)),
+                IsLate = Random.Shared.NextDouble() < 0.1,
+                Score = Random.Shared.Next(60, 101),
+            });
+        }
 
-            _attendance = new List<AttendanceRecord>
+        // Announcements
+        _announcements.AddRange(new[]
+        {
+            new Announcement
             {
-                new() { AttendanceId = "att-001", ClassId = "class-001", StudentId = "student-001", Date = DateTime.UtcNow.Date.AddDays(-1), Status = "Present" },
-                new() { AttendanceId = "att-002", ClassId = "class-001", StudentId = "student-002", Date = DateTime.UtcNow.Date.AddDays(-1), Status = "Absent" },
-                new() { AttendanceId = "att-003", ClassId = "class-001", StudentId = "student-003", Date = DateTime.UtcNow.Date.AddDays(-1), Status = "Present" },
-                new() { AttendanceId = "att-004", ClassId = "class-001", StudentId = "student-001", Date = DateTime.UtcNow.Date, Status = "Present" },
-                new() { AttendanceId = "att-005", ClassId = "class-001", StudentId = "student-002", Date = DateTime.UtcNow.Date, Status = "Present" },
-            };
+                Id = Guid.NewGuid(), ClassRoomId = csClass.Id, AuthorId = drJane,
+                Body = "Hello everyone! I've just uploaded the lecture slides for Module 3. Please review them before Thursday's sync session. We will be diving deep into Algorithmic Complexity.",
+                PostedAt = DateTime.UtcNow.AddHours(-2),
+                Attachments = new List<ContentItem>
+                {
+                    new() { Id = Guid.NewGuid(), FileName = "Week3_Complexity.pdf", FileType = "PDF", FileSizeBytes = 2516582 },
+                    new() { Id = Guid.NewGuid(), FileName = "Lecture_Reference.png", FileType = "IMAGE", FileSizeBytes = 1153434 }
+                }
+            },
+            new Announcement
+            {
+                Id = Guid.NewGuid(), ClassRoomId = csClass.Id, AuthorId = marcus,
+                Body = "Has anyone started on the sorting algorithm implementation? I'm having a bit of trouble with the pivot selection in Quicksort.",
+                PostedAt = DateTime.UtcNow.AddHours(-5),
+            },
+            new Announcement
+            {
+                Id = Guid.NewGuid(), ClassRoomId = csClass.Id, AuthorId = sarah,
+                Body = "Reminder that our study group meets at 4 PM in the virtual lab! Link is in the Resources tab.",
+                PostedAt = DateTime.UtcNow.AddDays(-1),
+            },
+        });
 
-            _conversations = new List<Conversation>
+        // Content modules
+        _modules.AddRange(new[]
+        {
+            new ContentModule
             {
-                new() { ConversationId = "conv-001", Title = "Juan Dela Cruz", OtherParticipant = _users[1], LastMessage = new Message { Content = "Ma'am, can I have an extension on the worksheet?", SentAt = DateTime.UtcNow.AddHours(-2) }, UnreadCount = 1, UpdatedAt = DateTime.UtcNow.AddHours(-2) },
-                new() { ConversationId = "conv-002", Title = "Maria Clara", OtherParticipant = _users[2], LastMessage = new Message { Content = "Thank you for the feedback, Ma'am!", SentAt = DateTime.UtcNow.AddDays(-1) }, UnreadCount = 0, UpdatedAt = DateTime.UtcNow.AddDays(-1) },
-                new() { ConversationId = "conv-003", Title = "Jose Rizal", OtherParticipant = _users[3], LastMessage = new Message { Content = "I submitted my essay. Please check when you have time.", SentAt = DateTime.UtcNow.AddDays(-2) }, UnreadCount = 0, UpdatedAt = DateTime.UtcNow.AddDays(-2) },
-            };
+                Id = Guid.NewGuid(), ClassRoomId = csClass.Id,
+                Title = "Week 1 — Introduction to Computer Science",
+                Description = "Overview of computing, binary systems, and the history of programming languages.",
+                ItemCount = 12,
+                Items = new List<ContentItem>
+                {
+                    new() { Id = Guid.NewGuid(), FileName = "Intro_Lecture.pdf", FileType = "PDF", FileSizeBytes = 3145728 },
+                    new() { Id = Guid.NewGuid(), FileName = "Binary_Systems.pptx", FileType = "PPTX", FileSizeBytes = 5242880 },
+                    new() { Id = Guid.NewGuid(), FileName = "History_Timeline.png", FileType = "IMAGE", FileSizeBytes = 1048576 },
+                }
+            },
+            new ContentModule
+            {
+                Id = Guid.NewGuid(), ClassRoomId = csClass.Id,
+                Title = "Week 2 — Variables and Data Types",
+                Description = "Primitive types, type casting, and variable scope in C.",
+                ItemCount = 8,
+                Items = new List<ContentItem>
+                {
+                    new() { Id = Guid.NewGuid(), FileName = "DataTypes_Notes.pdf", FileType = "PDF", FileSizeBytes = 2097152 },
+                    new() { Id = Guid.NewGuid(), FileName = "Practice_Exercises.pdf", FileType = "PDF", FileSizeBytes = 1572864 },
+                }
+            },
+            new ContentModule
+            {
+                Id = Guid.NewGuid(), ClassRoomId = csClass.Id,
+                Title = "Week 3 — Algorithmic Complexity",
+                Description = "Big-O notation, time and space complexity analysis.",
+                ItemCount = 6,
+            },
+        });
 
-            _messages = new List<Message>
+        // Attendance for June 2026
+        var attendanceStudents = csClass.Members.Where(m => m.Status == MemberStatus.Active).Take(30).ToList();
+        for (int day = 2; day <= 27; day++)
+        {
+            if (new DateOnly(2026, 6, day).DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday) continue;
+            foreach (var member in attendanceStudents)
             {
-                new() { MessageId = "msg-001", ConversationId = "conv-001", SenderId = "student-001", Content = "Ma'am, can I have an extension on the worksheet?", SentAt = DateTime.UtcNow.AddHours(-3) },
-                new() { MessageId = "msg-002", ConversationId = "conv-001", SenderId = "teacher-001", Content = "Sure, you have until Friday. Make sure to complete all problems.", SentAt = DateTime.UtcNow.AddHours(-2) },
-                new() { MessageId = "msg-003", ConversationId = "conv-001", SenderId = "student-001", Content = "Thank you, Ma'am!", SentAt = DateTime.UtcNow.AddHours(-2).AddMinutes(-5) },
-                new() { MessageId = "msg-004", ConversationId = "conv-002", SenderId = "student-002", Content = "Ma'am, where can I find the reading materials?", SentAt = DateTime.UtcNow.AddDays(-1).AddHours(-2) },
-                new() { MessageId = "msg-005", ConversationId = "conv-002", SenderId = "teacher-001", Content = "Check the Content tab in our class. I uploaded them yesterday.", SentAt = DateTime.UtcNow.AddDays(-1).AddHours(-1) },
-                new() { MessageId = "msg-006", ConversationId = "conv-002", SenderId = "student-002", Content = "Thank you for the feedback, Ma'am!", SentAt = DateTime.UtcNow.AddDays(-1) },
-            };
-
-            _activities = new List<ActivityItem>
-            {
-                new() { ActivityId = "act-001", Title = "Juan Dela Cruz submitted worksheet", Category = "Submissions", Timestamp = DateTime.UtcNow.AddMinutes(-10), IsRead = false, RelatedClassId = "class-001" },
-                new() { ActivityId = "act-002", Title = "New message from Maria Clara", Category = "Messages", Timestamp = DateTime.UtcNow.AddMinutes(-25), IsRead = false, RelatedClassId = null },
-                new() { ActivityId = "act-003", Title = "Created assignment 'Lab Report'", Category = "Alerts", Timestamp = DateTime.UtcNow.AddHours(-2), IsRead = true, RelatedClassId = "class-002" },
-                new() { ActivityId = "act-004", Title = "Gabriela Silang submitted essay", Category = "Submissions", Timestamp = DateTime.UtcNow.AddHours(-3), IsRead = true, RelatedClassId = "class-002" },
-                new() { ActivityId = "act-005", Title = "New join request from Andres Bonifacio", Category = "Alerts", Timestamp = DateTime.UtcNow.AddHours(-5), IsRead = true, RelatedClassId = "class-002" },
-                new() { ActivityId = "act-006", Title = "Posted announcement in Math 9", Category = "Alerts", Timestamp = DateTime.UtcNow.AddDays(-1), IsRead = true, RelatedClassId = "class-001" },
-            };
-
-            _calendarEvents = new List<CalendarEvent>
-            {
-                new() { EventId = "evt-001", Title = "Math 9 - Lecture", EventType = "Class", ClassId = "class-001", ClassColorPreset = "1", StartDate = DateTime.UtcNow.Date.AddHours(8), EndDate = DateTime.UtcNow.Date.AddHours(9), IsAllDay = false },
-                new() { EventId = "evt-002", Title = "Science 10 - Lab", EventType = "Class", ClassId = "class-002", ClassColorPreset = "2", StartDate = DateTime.UtcNow.Date.AddHours(10), EndDate = DateTime.UtcNow.Date.AddHours(12), IsAllDay = false },
-                new() { EventId = "evt-003", Title = "Algebraic Expressions Due", EventType = "Assignment", ClassId = "class-001", ClassColorPreset = "1", StartDate = DateTime.UtcNow.Date.AddHours(23), IsAllDay = false },
-                new() { EventId = "evt-004", Title = "English 8 - Discussion", EventType = "Class", ClassId = "class-003", ClassColorPreset = "3", StartDate = DateTime.UtcNow.Date.AddDays(1).AddHours(13), EndDate = DateTime.UtcNow.Date.AddDays(1).AddHours(14), IsAllDay = false },
-                new() { EventId = "evt-005", Title = "Midterm Exam", EventType = "Exam", ClassId = "class-001", ClassColorPreset = "1", StartDate = DateTime.UtcNow.Date.AddDays(7).AddHours(8), EndDate = DateTime.UtcNow.Date.AddDays(7).AddHours(10), IsAllDay = false },
-            };
-
-            _joinRequests = new List<JoinRequest>
-            {
-                new() { RequestId = "jr-001", ClassId = "class-002", StudentId = "student-006", Status = "Pending", RequestedAt = DateTime.UtcNow.AddHours(-3) },
-                new() { RequestId = "jr-002", ClassId = "class-003", StudentId = "student-004", Status = "Pending", RequestedAt = DateTime.UtcNow.AddHours(-5) },
-            };
-
-            foreach (var c in _classes)
-            {
-                c.Instructor = _users.FirstOrDefault(u => u.Id == c.InstructorId);
-                c.Assignments = _assignments.Where(a => a.ClassId == c.ClassId).ToList();
-                c.Announcements = _announcements.Where(a => a.ClassId == c.ClassId).ToList();
-                c.Folders = _folders.Where(f => f.ClassId == c.ClassId).ToList();
-                c.Members = _members.Where(m => m.ClassId == c.ClassId).ToList();
-            }
-
-            foreach (var ann in _announcements)
-            {
-                ann.Author = _users.FirstOrDefault(u => u.Id == ann.AnnouncementAuthorId);
-                ann.Class = _classes.FirstOrDefault(c => c.ClassId == ann.ClassId);
-            }
-
-            foreach (var m in _members)
-            {
-                m.User = _users.FirstOrDefault(u => u.Id == m.UserId);
-                m.Class = _classes.FirstOrDefault(c => c.ClassId == m.ClassId);
-            }
-
-            foreach (var sub in _submissions)
-            {
-                sub.Student = _users.FirstOrDefault(u => u.Id == sub.StudentId);
-                sub.Assignment = _assignments.FirstOrDefault(a => a.AssignmentId == sub.AssignmentId);
-            }
-
-            foreach (var att in _attendance)
-            {
-                att.Student = _users.FirstOrDefault(u => u.Id == att.StudentId);
-                att.Class = _classes.FirstOrDefault(c => c.ClassId == att.ClassId);
-            }
-
-            foreach (var jr in _joinRequests)
-            {
-                jr.Student = _users.FirstOrDefault(u => u.Id == jr.StudentId);
-                jr.Class = _classes.FirstOrDefault(c => c.ClassId == jr.ClassId);
+                var rand = Random.Shared.NextDouble();
+                _attendance.Add(new AttendanceRecord
+                {
+                    Id = Guid.NewGuid(),
+                    ClassRoomId = csClass.Id,
+                    StudentId = member.UserId,
+                    Date = new DateOnly(2026, 6, day),
+                    Status = rand < 0.85 ? AttendanceStatus.Present : rand < 0.95 ? AttendanceStatus.Absent : AttendanceStatus.Excused
+                });
             }
         }
 
-        public string GetGradientForClass(string classId)
+        // Conversations
+        _conversations.AddRange(new[]
         {
-            var index = Math.Abs(classId.GetHashCode()) % GradientPresets.Count;
-            return GradientPresets[index];
-        }
-
-        public Task<User?> GetCurrentUserAsync() => Task.FromResult(_users.FirstOrDefault(u => u.Id == _currentTeacherId));
-        public Task<List<Class>> GetTeacherClassesAsync(string teacherId) => Task.FromResult(_classes.Where(c => c.InstructorId == teacherId).ToList());
-        public Task<Class?> GetClassAsync(string classId) => Task.FromResult(_classes.FirstOrDefault(c => c.ClassId == classId));
-
-        public Task<Class> CreateClassAsync(Class newClass)
-        {
-            newClass.ClassId = $"class-{_idCounter++}";
-            newClass.InstructorId = _currentTeacherId;
-            newClass.Instructor = _users.FirstOrDefault(u => u.Id == _currentTeacherId);
-            newClass.CreatedAt = DateTime.UtcNow;
-            _classes.Add(newClass);
-            return Task.FromResult(newClass);
-        }
-
-        public Task<List<Assignment>> GetClassAssignmentsAsync(string classId) => Task.FromResult(_assignments.Where(a => a.ClassId == classId).ToList());
-        public Task<Assignment?> GetAssignmentAsync(string assignmentId) => Task.FromResult(_assignments.FirstOrDefault(a => a.AssignmentId == assignmentId));
-        public Task<List<Submission>> GetAssignmentSubmissionsAsync(string assignmentId) => Task.FromResult(_submissions.Where(s => s.AssignmentId == assignmentId).ToList());
-
-        public Task SaveGradeAsync(string submissionId, double? score)
-        {
-            var sub = _submissions.FirstOrDefault(s => s.SubmissionId == submissionId);
-            if (sub != null) sub.Score = score;
-            return Task.CompletedTask;
-        }
-
-        public Task<List<Member>> GetClassMembersAsync(string classId) => Task.FromResult(_members.Where(m => m.ClassId == classId).ToList());
-        public Task<List<JoinRequest>> GetPendingJoinRequestsAsync(string classId) => Task.FromResult(_joinRequests.Where(j => j.ClassId == classId && j.Status == "Pending").ToList());
-
-        public Task AcceptJoinRequestAsync(string requestId)
-        {
-            var jr = _joinRequests.FirstOrDefault(j => j.RequestId == requestId);
-            if (jr != null)
+            new Conversation
             {
-                jr.Status = "Accepted";
-                jr.ResolvedAt = DateTime.UtcNow;
-                var newMember = new Member { MemberId = $"m-{_idCounter++}", UserId = jr.StudentId, ClassId = jr.ClassId, Role = "Student", JoinedDate = DateTime.UtcNow };
-                newMember.User = _users.FirstOrDefault(u => u.Id == jr.StudentId);
-                newMember.Class = _classes.FirstOrDefault(c => c.ClassId == jr.ClassId);
-                _members.Add(newMember);
-            }
-            return Task.CompletedTask;
-        }
+                Id = Guid.NewGuid(),
+                ParticipantIds = new List<Guid> { drJane, marcus, sarah },
+                ClassRoomId = csClass.Id,
+                Title = "CS Study Group",
+                IsGroup = true,
+                LastMessageAt = DateTime.UtcNow.AddMinutes(-30),
+                LastMessagePreview = "See you all at 4 PM!",
+                UnreadCount = 2
+            },
+            new Conversation
+            {
+                Id = Guid.NewGuid(),
+                ParticipantIds = new List<Guid> { drJane, marcus },
+                Title = "Marcus Aurelius",
+                IsGroup = false,
+                LastMessageAt = DateTime.UtcNow.AddHours(-3),
+                LastMessagePreview = "Thank you for the feedback, Dr. Smith.",
+                UnreadCount = 0
+            },
+            new Conversation
+            {
+                Id = Guid.NewGuid(),
+                ParticipantIds = new List<Guid> { profAlex, sarah },
+                Title = "Sarah Jenkins",
+                IsGroup = false,
+                LastMessageAt = DateTime.UtcNow.AddDays(-1),
+                LastMessagePreview = "I'll submit the revised report by Friday.",
+                UnreadCount = 1
+            },
+        });
 
-        public Task RejectJoinRequestAsync(string requestId)
+        // Messages for first conversation
+        var studyGroupConv = _conversations[0];
+        _messages.AddRange(new[]
         {
-            var jr = _joinRequests.FirstOrDefault(j => j.RequestId == requestId);
-            if (jr != null) { jr.Status = "Rejected"; jr.ResolvedAt = DateTime.UtcNow; }
-            return Task.CompletedTask;
-        }
+            new Message { Id = Guid.NewGuid(), SenderId = drJane, Body = "Hi everyone, I've created this group for our weekly study sessions.", SentAt = DateTime.UtcNow.AddDays(-2), IsGroupMessage = true, ClassRoomId = csClass.Id },
+            new Message { Id = Guid.NewGuid(), SenderId = marcus, Body = "Great idea! Should we start with the sorting algorithms?", SentAt = DateTime.UtcNow.AddDays(-2).AddHours(1), IsGroupMessage = true, ClassRoomId = csClass.Id },
+            new Message { Id = Guid.NewGuid(), SenderId = sarah, Body = "See you all at 4 PM!", SentAt = DateTime.UtcNow.AddMinutes(-30), IsGroupMessage = true, ClassRoomId = csClass.Id },
+        });
 
-        public Task RemoveMemberAsync(string memberId)
+        // Calendar events
+        var today = DateTime.Today;
+        _events.AddRange(new[]
         {
-            var m = _members.FirstOrDefault(x => x.MemberId == memberId);
-            if (m != null) _members.Remove(m);
-            return Task.CompletedTask;
-        }
+            new CalendarEvent { Id = Guid.NewGuid(), ClassRoomId = csClass.Id, Title = "CS Lecture", Start = today.AddHours(8), End = today.AddHours(9.5), Color = "#6366F1" },
+            new CalendarEvent { Id = Guid.NewGuid(), ClassRoomId = physicsPlato.Id, Title = "Physics (Plato)", Start = today.AddHours(16), End = today.AddHours(17.5), Color = "#0EA5E9" },
+            new CalendarEvent { Id = Guid.NewGuid(), ClassRoomId = physicsEinstein.Id, Title = "Physics (Einstein)", Start = today.AddDays(1).AddHours(16), End = today.AddDays(1).AddHours(17.5), Color = "#10B981" },
+            new CalendarEvent { Id = Guid.NewGuid(), Title = "Problem Set 1 Due", Start = new DateTime(2025, 10, 15), End = new DateTime(2025, 10, 15), Color = "#DC2626", Category = "deadline" },
+            new CalendarEvent { Id = Guid.NewGuid(), Title = "Quiz: Data Structures", Start = new DateTime(2025, 10, 22), End = new DateTime(2025, 10, 22), Color = "#D97706", Category = "deadline" },
+        });
 
-        public Task<List<Announcement>> GetClassAnnouncementsAsync(string classId) => Task.FromResult(_announcements.Where(a => a.ClassId == classId).OrderByDescending(a => a.AnnouncementDate).ToList());
-
-        public Task<Announcement> PostAnnouncementAsync(Announcement announcement)
+        // Activity feed
+        _activities.AddRange(new[]
         {
-            announcement.AnnouncementId = $"ann-{_idCounter++}";
-            announcement.AnnouncementDate = DateTime.UtcNow;
-            announcement.CreatedAt = DateTime.UtcNow;
-            announcement.Author = _users.FirstOrDefault(u => u.Id == announcement.AnnouncementAuthorId);
-            _announcements.Add(announcement);
-            return Task.FromResult(announcement);
-        }
+            new ActivityItem { Id = Guid.NewGuid(), Title = "Marcus Aurelius submitted Problem Set 1", Category = "Submission", Timestamp = DateTime.UtcNow.AddHours(-1), IconType = "submission" },
+            new ActivityItem { Id = Guid.NewGuid(), Title = "New message from Sarah Jenkins", Category = "Message", Timestamp = DateTime.UtcNow.AddHours(-2), IconType = "message" },
+            new ActivityItem { Id = Guid.NewGuid(), Title = "Grade report generated for GR10-Einstein", Category = "Report", Timestamp = DateTime.UtcNow.AddHours(-5), IconType = "report" },
+            new ActivityItem { Id = Guid.NewGuid(), Title = "Problem Set 2 deadline approaching", Category = "Alert", Timestamp = DateTime.UtcNow.AddHours(-8), IconType = "alert" },
+            new ActivityItem { Id = Guid.NewGuid(), Title = "Sarah Jenkins submitted Research Paper", Category = "Submission", Timestamp = DateTime.UtcNow.AddDays(-1), IconType = "submission" },
+            new ActivityItem { Id = Guid.NewGuid(), Title = "New join request for GR10-Einstein", Category = "Alert", Timestamp = DateTime.UtcNow.AddDays(-1), IconType = "alert" },
+            new ActivityItem { Id = Guid.NewGuid(), Title = "Attendance recorded for June 15", Category = "Report", Timestamp = DateTime.UtcNow.AddDays(-2), IconType = "report" },
+        });
 
-        public Task<List<Folder>> GetClassFoldersAsync(string classId) => Task.FromResult(_folders.Where(f => f.ClassId == classId).ToList());
-        public Task<List<AttendanceRecord>> GetAttendanceForDateAsync(string classId, DateTime date) => Task.FromResult(_attendance.Where(a => a.ClassId == classId && a.Date.Date == date.Date).ToList());
-
-        public Task SaveAttendanceAsync(AttendanceRecord record)
+        // Todos
+        _todos.AddRange(new[]
         {
-            var existing = _attendance.FirstOrDefault(a => a.ClassId == record.ClassId && a.StudentId == record.StudentId && a.Date.Date == record.Date.Date);
-            if (existing != null) { existing.Status = record.Status; existing.UpdatedAt = DateTime.UtcNow; }
-            else { record.AttendanceId = $"att-{_idCounter++}"; record.CreatedAt = DateTime.UtcNow; _attendance.Add(record); }
-            return Task.CompletedTask;
-        }
+            new TodoItem { Id = Guid.NewGuid(), Title = "Grade Calculus HW #4", Description = "24/30 students submitted", DueDate = DateTime.Today, SubmittedCount = 24, TotalCount = 30 },
+            new TodoItem { Id = Guid.NewGuid(), Title = "Review Lab Reports", Description = "12/28 students submitted", DueDate = DateTime.Today.AddDays(1), SubmittedCount = 12, TotalCount = 28 },
+            new TodoItem { Id = Guid.NewGuid(), Title = "Check Problem Set 2", Description = "8/25 students submitted", DueDate = DateTime.Today.AddDays(3), SubmittedCount = 8, TotalCount = 25 },
+        });
+    }
 
-        public async Task MarkAllPresentAsync(string classId, DateTime date)
-        {
-            var students = _members.Where(m => m.ClassId == classId && m.Role == "Student").ToList();
-            foreach (var s in students)
-                await SaveAttendanceAsync(new AttendanceRecord { ClassId = classId, StudentId = s.UserId, Date = date, Status = "Present" });
-        }
+    // Classes
+    public Task<List<ClassRoom>> GetClassesAsync(Guid teacherId) =>
+        Task.FromResult(_classes.Where(c => c.TeacherId == teacherId).ToList());
 
-        public Task<List<Conversation>> GetConversationsAsync(string userId) => Task.FromResult(_conversations.OrderByDescending(c => c.UpdatedAt).ToList());
-        public Task<List<Message>> GetMessagesAsync(string conversationId) => Task.FromResult(_messages.Where(m => m.ConversationId == conversationId).OrderBy(m => m.SentAt).ToList());
+    public Task<ClassRoom?> GetClassByIdAsync(Guid classId) =>
+        Task.FromResult(_classes.FirstOrDefault(c => c.Id == classId));
 
-        public Task SendMessageAsync(string conversationId, string senderId, string content)
-        {
-            var msg = new Message { MessageId = $"msg-{_idCounter++}", ConversationId = conversationId, SenderId = senderId, Content = content, SentAt = DateTime.UtcNow };
-            _messages.Add(msg);
-            var conv = _conversations.FirstOrDefault(c => c.ConversationId == conversationId);
-            if (conv != null) { conv.LastMessage = msg; conv.UpdatedAt = DateTime.UtcNow; }
-            return Task.CompletedTask;
-        }
+    public Task<ClassRoom> CreateClassAsync(ClassRoom classroom)
+    {
+        classroom.Id = Guid.NewGuid();
+        classroom.GradientIndex = _classes.Count % 4;
+        _classes.Add(classroom);
+        return Task.FromResult(classroom);
+    }
 
-        public Task<List<ActivityItem>> GetActivitiesAsync(string userId, string? category = null)
-        {
-            var q = _activities.AsQueryable();
-            if (!string.IsNullOrEmpty(category) && category != "All") q = q.Where(a => a.Category == category);
-            return Task.FromResult(q.OrderByDescending(a => a.Timestamp).ToList());
-        }
+    // Assignments
+    public Task<List<Assignment>> GetAssignmentsAsync(Guid classRoomId) =>
+        Task.FromResult(_assignments.Where(a => a.ClassRoomId == classRoomId).ToList());
 
-        public Task<List<CalendarEvent>> GetCalendarEventsAsync(string userId, DateTime month)
-        {
-            var start = new DateTime(month.Year, month.Month, 1);
-            var end = start.AddMonths(1);
-            return Task.FromResult(_calendarEvents.Where(e => e.StartDate >= start && e.StartDate < end).OrderBy(e => e.StartDate).ToList());
-        }
+    public Task<Assignment> CreateAssignmentAsync(Assignment assignment)
+    {
+        assignment.Id = Guid.NewGuid();
+        _assignments.Add(assignment);
+        return Task.FromResult(assignment);
+    }
 
-        public Task<List<Submission>> GetRecentSubmissionsAsync(string teacherId, int count = 4)
-        {
-            var teacherClassIds = _classes.Where(c => c.InstructorId == teacherId).Select(c => c.ClassId).ToList();
-            var assignmentIds = _assignments.Where(a => teacherClassIds.Contains(a.ClassId)).Select(a => a.AssignmentId).ToList();
-            return Task.FromResult(_submissions.Where(s => assignmentIds.Contains(s.AssignmentId) && s.SubmittedAt != null).OrderByDescending(s => s.SubmittedAt).Take(count).ToList());
-        }
+    // Submissions
+    public Task<List<Submission>> GetSubmissionsAsync(Guid assignmentId) =>
+        Task.FromResult(_submissions.Where(s => s.AssignmentId == assignmentId).ToList());
+
+    public Task UpdateScoreAsync(Guid submissionId, int score, string? feedback)
+    {
+        var sub = _submissions.FirstOrDefault(s => s.Id == submissionId);
+        if (sub != null) { sub.Score = score; sub.Feedback = feedback; }
+        return Task.CompletedTask;
+    }
+
+    // Members
+    public Task<List<AppUser>> GetMembersAsync(Guid classRoomId)
+    {
+        var cls = _classes.FirstOrDefault(c => c.Id == classRoomId);
+        if (cls == null) return Task.FromResult(new List<AppUser>());
+        var activeIds = cls.Members.Where(m => m.Status == MemberStatus.Active).Select(m => m.UserId).ToHashSet();
+        var allUsers = _authService.GetAllUsers();
+        var teacher = allUsers.FirstOrDefault(u => u.Id == cls.TeacherId);
+        var members = allUsers.Where(u => activeIds.Contains(u.Id)).ToList();
+        if (teacher != null) members.Insert(0, teacher);
+        return Task.FromResult(members);
+    }
+
+    public Task<List<ClassMember>> GetPendingRequestsAsync(Guid classRoomId)
+    {
+        var cls = _classes.FirstOrDefault(c => c.Id == classRoomId);
+        return Task.FromResult(cls?.Members.Where(m => m.Status == MemberStatus.Pending).ToList() ?? new List<ClassMember>());
+    }
+
+    public Task AcceptMemberAsync(Guid classRoomId, Guid userId)
+    {
+        var cls = _classes.FirstOrDefault(c => c.Id == classRoomId);
+        var member = cls?.Members.FirstOrDefault(m => m.UserId == userId);
+        if (member != null) member.Status = MemberStatus.Active;
+        return Task.CompletedTask;
+    }
+
+    public Task RejectMemberAsync(Guid classRoomId, Guid userId)
+    {
+        var cls = _classes.FirstOrDefault(c => c.Id == classRoomId);
+        var member = cls?.Members.FirstOrDefault(m => m.UserId == userId);
+        if (member != null) member.Status = MemberStatus.Rejected;
+        return Task.CompletedTask;
+    }
+
+    // Announcements
+    public Task<List<Announcement>> GetAnnouncementsAsync(Guid classRoomId) =>
+        Task.FromResult(_announcements.Where(a => a.ClassRoomId == classRoomId).OrderByDescending(a => a.PostedAt).ToList());
+
+    public Task<Announcement> PostAnnouncementAsync(Announcement announcement)
+    {
+        announcement.Id = Guid.NewGuid();
+        announcement.PostedAt = DateTime.UtcNow;
+        _announcements.Insert(0, announcement);
+        return Task.FromResult(announcement);
+    }
+
+    // Content
+    public Task<List<ContentModule>> GetModulesAsync(Guid classRoomId) =>
+        Task.FromResult(_modules.Where(m => m.ClassRoomId == classRoomId).ToList());
+
+    public Task<ContentModule> CreateModuleAsync(ContentModule module)
+    {
+        module.Id = Guid.NewGuid();
+        _modules.Add(module);
+        return Task.FromResult(module);
+    }
+
+    // Attendance
+    public Task<List<AttendanceRecord>> GetAttendanceAsync(Guid classRoomId, DateOnly date) =>
+        Task.FromResult(_attendance.Where(a => a.ClassRoomId == classRoomId && a.Date == date).ToList());
+
+    public Task RecordAttendanceAsync(AttendanceRecord record)
+    {
+        var existing = _attendance.FirstOrDefault(a =>
+            a.ClassRoomId == record.ClassRoomId && a.StudentId == record.StudentId && a.Date == record.Date);
+        if (existing != null) existing.Status = record.Status;
+        else { record.Id = Guid.NewGuid(); _attendance.Add(record); }
+        return Task.CompletedTask;
+    }
+
+    public Task<List<DateOnly>> GetAttendanceDatesAsync(Guid classRoomId) =>
+        Task.FromResult(_attendance.Where(a => a.ClassRoomId == classRoomId).Select(a => a.Date).Distinct().OrderByDescending(d => d).ToList());
+
+    // Messages
+    public Task<List<Conversation>> GetConversationsAsync(Guid userId) =>
+        Task.FromResult(_conversations.Where(c => c.ParticipantIds.Contains(userId)).OrderByDescending(c => c.LastMessageAt).ToList());
+
+    public Task<List<Message>> GetMessagesAsync(Guid conversationId) =>
+        Task.FromResult(_messages.OrderBy(m => m.SentAt).ToList());
+
+    public Task SendMessageAsync(Message message)
+    {
+        message.Id = Guid.NewGuid();
+        message.SentAt = DateTime.UtcNow;
+        _messages.Add(message);
+        return Task.CompletedTask;
+    }
+
+    // Calendar
+    public Task<List<CalendarEvent>> GetEventsAsync(Guid teacherId, int year, int month) =>
+        Task.FromResult(_events.Where(e => e.Start.Year == year && e.Start.Month == month || e.End.Year == year && e.End.Month == month).ToList());
+
+    // Activity
+    public Task<List<ActivityItem>> GetActivityFeedAsync(Guid userId) =>
+        Task.FromResult(_activities.OrderByDescending(a => a.Timestamp).ToList());
+
+    // Dashboard
+    public Task<List<TodoItem>> GetTodoItemsAsync(Guid teacherId) =>
+        Task.FromResult(_todos);
+
+    public Task<List<ClassRoom>> GetUpcomingClassesAsync(Guid teacherId) =>
+        Task.FromResult(_classes.Where(c => c.TeacherId == teacherId).ToList());
+
+    // Users
+    public Task<AppUser?> GetUserByIdAsync(Guid userId) =>
+        Task.FromResult(_authService.GetAllUsers().FirstOrDefault(u => u.Id == userId));
+
+    public Task<List<AppUser>> GetAllStudentsAsync() =>
+        Task.FromResult(_authService.GetAllUsers().Where(u => u.Role == UserRole.Student).ToList());
+
+    public Task UpdateUserAsync(AppUser user)
+    {
+        // In mock, the user objects are references so they're already updated
+        return Task.CompletedTask;
     }
 }

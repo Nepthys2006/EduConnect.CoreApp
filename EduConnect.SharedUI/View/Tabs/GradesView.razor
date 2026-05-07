@@ -1,0 +1,119 @@
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IDataService DataService
+
+<div class="grd-container">
+    <div class="grd-header">
+        <h3 class="grd-title">Gradebook</h3>
+    </div>
+
+    <div class="ec-card grd-table">
+        <table class="ec-table">
+            <thead>
+                <tr>
+                    <th>Item Name</th>
+                    <th>Type</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
+                    <th>Scores</th>
+                    <th>Edit</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var asn in _assignments)
+                {
+                    var subs = _submissions.GetValueOrDefault(asn.Id, new List<Submission>());
+                    var submittedCount = subs.Count;
+                    var avgScore = subs.Any(s => s.Score.HasValue) ? subs.Where(s => s.Score.HasValue).Average(s => s.Score!.Value) : 0;
+                    var status = GetStatus(asn, submittedCount);
+                    <tr>
+                        <td style="font-weight:500;">@asn.Title</td>
+                        <td>
+                            <div class="grd-type-icon @GetTypeColor(asn.Type)">
+                                @GetTypeLabel(asn.Type)
+                            </div>
+                        </td>
+                        <td>@asn.DueDate.ToString("MMM d, yyyy")</td>
+                        <td><span class="ec-badge @GetStatusBadge(status)">@status</span></td>
+                        <td>
+                            @if (subs.Any(s => s.Score.HasValue))
+                            {
+                                var ratio = avgScore / asn.MaxPoints;
+                                var pillClass = ratio >= 0.8 ? "score-high" : ratio >= 0.5 ? "score-mid" : "score-low";
+                                <span class="grd-score-pill @pillClass">@((int)avgScore)/@asn.MaxPoints</span>
+                            }
+                            else
+                            {
+                                <span style="color:var(--color-text-tertiary);">---</span>
+                            }
+                        </td>
+                        <td>
+                            <button class="ec-icon-btn" aria-label="Edit grades">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <div class="grd-summary">
+            <span>TOTAL ASSIGNMENTS: @_assignments.Count</span>
+            <span style="margin-left:auto;">
+                COMPLETED: <span style="color:var(--color-success);">@_assignments.Count(a => a.Status == AssignmentStatus.Active)</span>
+            </span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .grd-score-pill { display:inline-flex;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600; }
+    .score-high { background:#DCFCE7;color:#15803D; }
+    .score-mid { background:#FEF3C7;color:#B45309; }
+    .score-low { background:#FEE2E2;color:#B91C1C; }
+</style>
+
+@code {
+    [Parameter] public Guid ClassRoomId { get; set; }
+    private List<Assignment> _assignments = new();
+    private Dictionary<Guid, List<Submission>> _submissions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _assignments = await DataService.GetAssignmentsAsync(ClassRoomId);
+        foreach (var asn in _assignments)
+        {
+            _submissions[asn.Id] = await DataService.GetSubmissionsAsync(asn.Id);
+        }
+    }
+
+    private string GetStatus(Assignment asn, int submittedCount) =>
+        asn.Status == AssignmentStatus.Pending ? "Ongoing" :
+        asn.DueDate < DateTime.UtcNow && submittedCount == 0 ? "Late" :
+        submittedCount > 0 ? "Submitted" : "Ongoing";
+
+    private string GetStatusBadge(string status) => status switch
+    {
+        "Submitted" => "ec-badge-success",
+        "Ongoing" => "ec-badge-warning",
+        "Late" => "ec-badge-danger",
+        _ => "ec-badge-neutral"
+    };
+
+    private string GetTypeColor(AssignmentType type) => type switch
+    {
+        AssignmentType.ProblemSet => "asn-type-blue",
+        AssignmentType.Quiz => "asn-type-purple",
+        AssignmentType.ResearchPaper => "asn-type-orange",
+        _ => "asn-type-teal"
+    };
+
+    private string GetTypeLabel(AssignmentType type) => type switch
+    {
+        AssignmentType.ProblemSet => "PS",
+        AssignmentType.Quiz => "QZ",
+        AssignmentType.ResearchPaper => "RP",
+        AssignmentType.Activity => "AC",
+        AssignmentType.Exam => "EX",
+        _ => "?"
+    };
+}

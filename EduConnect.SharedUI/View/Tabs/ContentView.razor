@@ -1,0 +1,76 @@
+@using EduConnect.SharedUI.Services
+@using EduConnect.SharedUI.Models
+@inject IDataService DataService
+
+<div class="cnt-container">
+    <div class="cnt-grid">
+        <div class="ec-card cnt-add" @onclick="AddFolder" role="button" tabindex="0" aria-label="Add new folder">
+            <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v8"/><path d="M8 12h8"/></svg>
+            <span class="cnt-add-label">Add New Folder</span>
+            <span class="cnt-add-hint">Create a new module to organize lessons and resources</span>
+        </div>
+
+        @foreach (var module in _modules)
+        {
+            <div class="ec-card cnt-folder">
+                <div class="cnt-folder-header" @onclick="() => ToggleModule(module.Id)">
+                    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#2563EB" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                    <div class="cnt-folder-info">
+                        <h4 class="cnt-folder-name">@module.Title</h4>
+                        <p class="cnt-folder-desc">@module.Description</p>
+                    </div>
+                    <div class="cnt-folder-actions">
+                        <span class="cnt-folder-count">@module.ItemCount items</span>
+                        <button class="ec-icon-btn" aria-label="Add item">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                        </button>
+                        <svg class="cnt-chevron @(_expanded.Contains(module.Id) ? "open" : "")" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                    </div>
+                </div>
+                @if (_expanded.Contains(module.Id) && module.Items.Any())
+                {
+                    <div class="cnt-folder-items">
+                        @foreach (var item in module.Items)
+                        {
+                            <div class="cnt-item">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                                <span class="cnt-item-name">@item.FileName</span>
+                                <span style="font-size:11px;color:var(--color-text-tertiary);">@item.FileType · @item.FileSizeDisplay</span>
+                                <div class="cnt-item-actions">
+                                    <button class="ec-icon-btn" aria-label="Download"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></button>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid ClassRoomId { get; set; }
+    private List<ContentModule> _modules = new();
+    private HashSet<Guid> _expanded = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _modules = await DataService.GetModulesAsync(ClassRoomId);
+    }
+
+    private void ToggleModule(Guid id)
+    {
+        if (!_expanded.Remove(id)) _expanded.Add(id);
+    }
+
+    private async Task AddFolder()
+    {
+        await DataService.CreateModuleAsync(new ContentModule
+        {
+            ClassRoomId = ClassRoomId,
+            Title = $"Week {_modules.Count + 1} — New Module",
+            Description = "Add a description for this module."
+        });
+        _modules = await DataService.GetModulesAsync(ClassRoomId);
+    }
+}

@@ -1,37 +1,58 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using EduConnect.SharedUI.Models;
 
-namespace EduConnect.SharedUI.Services
+namespace EduConnect.SharedUI.Services;
+
+public interface IDataService
 {
-    public interface IDataService
-    {
-        Task<User?> GetCurrentUserAsync();
-        Task<List<Class>> GetTeacherClassesAsync(string teacherId);
-        Task<Class?> GetClassAsync(string classId);
-        Task<Class> CreateClassAsync(Class newClass);
-        Task<List<Assignment>> GetClassAssignmentsAsync(string classId);
-        Task<Assignment?> GetAssignmentAsync(string assignmentId);
-        Task<List<Submission>> GetAssignmentSubmissionsAsync(string assignmentId);
-        Task SaveGradeAsync(string submissionId, double? score);
-        Task<List<Member>> GetClassMembersAsync(string classId);
-        Task<List<JoinRequest>> GetPendingJoinRequestsAsync(string classId);
-        Task AcceptJoinRequestAsync(string requestId);
-        Task RejectJoinRequestAsync(string requestId);
-        Task RemoveMemberAsync(string memberId);
-        Task<List<Announcement>> GetClassAnnouncementsAsync(string classId);
-        Task<Announcement> PostAnnouncementAsync(Announcement announcement);
-        Task<List<Folder>> GetClassFoldersAsync(string classId);
-        Task<List<AttendanceRecord>> GetAttendanceForDateAsync(string classId, DateTime date);
-        Task SaveAttendanceAsync(AttendanceRecord record);
-        Task MarkAllPresentAsync(string classId, DateTime date);
-        Task<List<Conversation>> GetConversationsAsync(string userId);
-        Task<List<Message>> GetMessagesAsync(string conversationId);
-        Task SendMessageAsync(string conversationId, string senderId, string content);
-        Task<List<ActivityItem>> GetActivitiesAsync(string userId, string? category = null);
-        Task<List<CalendarEvent>> GetCalendarEventsAsync(string userId, DateTime month);
-        Task<List<Submission>> GetRecentSubmissionsAsync(string teacherId, int count = 4);
-    }
+    // Classes
+    Task<List<ClassRoom>> GetClassesAsync(Guid teacherId);
+    Task<ClassRoom?> GetClassByIdAsync(Guid classId);
+    Task<ClassRoom> CreateClassAsync(ClassRoom classroom);
+
+    // Assignments
+    Task<List<Assignment>> GetAssignmentsAsync(Guid classRoomId);
+    Task<Assignment> CreateAssignmentAsync(Assignment assignment);
+
+    // Submissions
+    Task<List<Submission>> GetSubmissionsAsync(Guid assignmentId);
+    Task UpdateScoreAsync(Guid submissionId, int score, string? feedback);
+
+    // Members
+    Task<List<AppUser>> GetMembersAsync(Guid classRoomId);
+    Task<List<ClassMember>> GetPendingRequestsAsync(Guid classRoomId);
+    Task AcceptMemberAsync(Guid classRoomId, Guid userId);
+    Task RejectMemberAsync(Guid classRoomId, Guid userId);
+
+    // Announcements
+    Task<List<Announcement>> GetAnnouncementsAsync(Guid classRoomId);
+    Task<Announcement> PostAnnouncementAsync(Announcement announcement);
+
+    // Content
+    Task<List<ContentModule>> GetModulesAsync(Guid classRoomId);
+    Task<ContentModule> CreateModuleAsync(ContentModule module);
+
+    // Attendance
+    Task<List<AttendanceRecord>> GetAttendanceAsync(Guid classRoomId, DateOnly date);
+    Task RecordAttendanceAsync(AttendanceRecord record);
+    Task<List<DateOnly>> GetAttendanceDatesAsync(Guid classRoomId);
+
+    // Messages
+    Task<List<Conversation>> GetConversationsAsync(Guid userId);
+    Task<List<Message>> GetMessagesAsync(Guid conversationId);
+    Task SendMessageAsync(Message message);
+
+    // Calendar
+    Task<List<CalendarEvent>> GetEventsAsync(Guid teacherId, int year, int month);
+
+    // Activity
+    Task<List<ActivityItem>> GetActivityFeedAsync(Guid userId);
+
+    // Dashboard
+    Task<List<TodoItem>> GetTodoItemsAsync(Guid teacherId);
+    Task<List<ClassRoom>> GetUpcomingClassesAsync(Guid teacherId);
+
+    // Users
+    Task<AppUser?> GetUserByIdAsync(Guid userId);
+    Task<List<AppUser>> GetAllStudentsAsync();
+    Task UpdateUserAsync(AppUser user);
 }
