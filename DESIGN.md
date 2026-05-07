@@ -25,7 +25,7 @@ Understanding what to avoid is as important as knowing what to pursue. EduConnec
 
 - A startup dashboard from a Dribbble showcase — no glassmorphism, no neon accents, no floating blobs
 - A government portal — no grey-on-grey, no Times New Roman, no 1998-era form layouts
-- A generic "AI-designed" app — no purple-to-blue hero gradients, no Inter/Roboto everywhere, no predictable card grids with identical shadows and identical hover lifts
+- A generic "AI-designed" app — no indigo-to-purple hero gradients, no Inter/Roboto everywhere, no predictable card grids with identical shadows and identical hover lifts
 - An enterprise tool — no data-density for its own sake, no collapsed sidebars hiding seven levels of navigation
 
 ---
@@ -128,7 +128,7 @@ The base is **slate-tinted white** — not pure `#FFFFFF`, which reads as harsh 
 
 ```css
 /* === Backgrounds === */
---color-canvas:         #F7F8FA;   /* Page background — off-white with blue undertone */
+--color-canvas:         #F7F8FA;   /* Page background — off-white with a cool blue undertone that harmonizes with the primary blue */
 --color-surface:        #FFFFFF;   /* Cards, panels, modals */
 --color-surface-raised: #FFFFFF;   /* Elevated cards (with heavier shadow, not different color) */
 --color-surface-inset:  #F1F3F6;   /* Input fields, code blocks, inset areas */
@@ -146,24 +146,26 @@ The base is **slate-tinted white** — not pure `#FFFFFF`, which reads as harsh 
 --color-text-disabled:  #D1D5DB;   /* Truly disabled content */
 --color-text-inverse:   #FFFFFF;   /* Text on dark/primary backgrounds */
 
-/* === Primary — Refined Blue === */
-/* Not a generic SaaS blue. This sits between indigo and slate — serious, trustworthy. */
---color-primary-50:     #EEF2FF;
---color-primary-100:    #E0E7FF;
---color-primary-200:    #C7D2FE;
---color-primary-300:    #A5B4FC;
---color-primary-400:    #818CF8;
---color-primary-500:    #6366F1;   /* Base primary — interactive elements */
---color-primary-600:    #4F46E5;   /* Hover state */
---color-primary-700:    #4338CA;   /* Active/pressed state */
---color-primary-800:    #3730A3;   /* Dark backgrounds with primary context */
---color-primary-900:    #312E81;
+/* === Primary — True Blue === */
+/* A considered, characterful blue. Deeper than sky, lighter than navy.       */
+/* It reads as unambiguously blue — confident and trustworthy without being   */
+/* the generic SaaS #2563EB that ships with every Tailwind starter template.  */
+--color-primary-50:     #EFF6FF;   /* Tinted backgrounds, subtle highlights  */
+--color-primary-100:    #DBEAFE;   /* Badge backgrounds, info fills          */
+--color-primary-200:    #BFDBFE;   /* Sidebar tints, input focus halos       */
+--color-primary-300:    #93C5FD;   /* Decorative accents                     */
+--color-primary-400:    #60A5FA;   /* Lighter interactive states             */
+--color-primary-500:    #2563EB;   /* Base primary — interactive elements    */
+--color-primary-600:    #1D4ED8;   /* Hover state                            */
+--color-primary-700:    #1E3FAA;   /* Active/pressed state                   */
+--color-primary-800:    #1E3A8A;   /* Dark backgrounds with primary context  */
+--color-primary-900:    #1E3070;   /* Deepest — class banners, hero fills    */
 
 /* Semantic shortcuts */
---color-primary:        var(--color-primary-500);
---color-primary-hover:  var(--color-primary-600);
---color-primary-active: var(--color-primary-700);
---color-primary-subtle: var(--color-primary-50);
+--color-primary:        var(--color-primary-500);   /* #2563EB */
+--color-primary-hover:  var(--color-primary-600);   /* #1D4ED8 */
+--color-primary-active: var(--color-primary-700);   /* #1E3FAA */
+--color-primary-subtle: var(--color-primary-50);    /* #EFF6FF */
 
 /* === Accent — Warm Amber === */
 /* Used sparingly: "Today" deadline badges, important callouts, star ratings. */
@@ -172,9 +174,9 @@ The base is **slate-tinted white** — not pure `#FFFFFF`, which reads as harsh 
 --color-accent-dark:    #D97706;
 
 /* === Sidebar === */
---color-sidebar-bg:     #EEF2F8;   /* Slightly cooler than canvas */
---color-sidebar-active: #1E2939;   /* Near-black for active nav item background */
---color-sidebar-hover:  #E2E8F0;
+--color-sidebar-bg:     #EBF3FF;   /* Blue-tinted off-white — feels warm, not sterile */
+--color-sidebar-active: #1E3A8A;   /* Deep blue for active nav item — matches primary-800 */
+--color-sidebar-hover:  #DBEAFE;   /* Soft blue hover — same family as primary-100 */
 ```
 
 ### Semantic Colors — Data States
@@ -203,9 +205,9 @@ These are used exclusively for status badges, score pills, and attendance indica
 --color-neutral-border:#E2E8F0;
 
 /* Info / Informational callouts */
---color-info-bg:      #EFF6FF;
---color-info-text:    #1D4ED8;
---color-info-border:  #BFDBFE;
+--color-info-bg:      #EFF6FF;   /* Matches primary-50 */
+--color-info-text:    #1D4ED8;   /* Matches primary-600 — readable on light bg */
+--color-info-border:  #BFDBFE;   /* Matches primary-200 */
 ```
 
 ### Class Gradient System
@@ -213,13 +215,13 @@ These are used exclusively for status badges, score pills, and attendance indica
 Each class card receives one of four gradient identities, assigned by index. These are the only gradients in the system. They use desaturated, refined tones — not the saturated, "Dribbble card" gradients that look like every other EdTech product.
 
 ```css
-/* Gradient index 0 — Dusk Violet */
---grad-0-from: #6D5FBF;
---grad-0-to:   #4B7BA8;
+/* Gradient index 0 — Ocean Deep */
+--grad-0-from: #1E3A8A;   /* primary-800 — deep navy blue */
+--grad-0-to:   #2563EB;   /* primary-500 — clear blue */
 
 /* Gradient index 1 — Deep Teal */
---grad-1-from: #1A7FAD;
---grad-1-to:   #2A9D8F;
+--grad-1-from: #0E7490;   /* Cyan-700 */
+--grad-1-to:   #0D9488;   /* Teal-600 */
 
 /* Gradient index 2 — Forest */
 --grad-2-from: #2D7D52;
@@ -230,10 +232,10 @@ Each class card receives one of four gradient identities, assigned by index. The
 --grad-3-to:   #C8A227;
 
 /* Usage */
-.class-card[data-gradient="0"] { background: linear-gradient(135deg, var(--grad-0-from), var(--grad-0-to)); }
-.class-card[data-gradient="1"] { background: linear-gradient(135deg, var(--grad-1-from), var(--grad-1-to)); }
-.class-card[data-gradient="2"] { background: linear-gradient(135deg, var(--grad-2-from), var(--grad-2-to)); }
-.class-card[data-gradient="3"] { background: linear-gradient(135deg, var(--grad-3-from), var(--grad-3-to)); }
+.class-card[data-gradient="0"] { background: linear-gradient(135deg, var(--grad-0-from), var(--grad-0-to)); }  /* Ocean Deep */
+.class-card[data-gradient="1"] { background: linear-gradient(135deg, var(--grad-1-from), var(--grad-1-to)); }  /* Deep Teal  */
+.class-card[data-gradient="2"] { background: linear-gradient(135deg, var(--grad-2-from), var(--grad-2-to)); }  /* Forest     */
+.class-card[data-gradient="3"] { background: linear-gradient(135deg, var(--grad-3-from), var(--grad-3-to)); }  /* Ember      */
 ```
 
 ### Color Rules
@@ -324,7 +326,7 @@ Depth is expressed through shadow alone, never by color shifting the background.
              0 24px 48px rgba(17, 24, 39, 0.14);
 
 /* Focus ring — not a shadow, but rendered alongside */
---ring-focus: 0 0 0 3px rgba(99, 102, 241, 0.25);
+--ring-focus: 0 0 0 3px rgba(37, 99, 235, 0.22);
 ```
 
 ### Shadow Rules
@@ -739,7 +741,7 @@ Badges communicate state. They use full-pill radius and are always paired with a
 }
 
 .badge--professor, .badge--teacher {
-  background: var(--color-primary);
+  background: var(--color-primary);   /* #2563EB — clear blue */
   color:      var(--color-text-inverse);
 }
 
@@ -1031,7 +1033,7 @@ This section is as important as everything above. These are prohibited.
 
 | ❌ Prohibited | ✅ Instead |
 |---|---|
-| Purple-to-blue gradient hero sections | Flat primary color banners with contrast text |
+| Indigo-to-purple gradient hero sections | Flat primary blue banners with contrast text |
 | Glassmorphism (`backdrop-filter: blur`) | Solid surface colors with defined borders |
 | Hover tooltip on every element | Visible labels where space permits; tooltip only for icon-only elements |
 | Three or more font families | Instrument Serif + Figtree + JetBrains Mono only |
@@ -1095,7 +1097,7 @@ For implementation: import or declare these as CSS custom properties in `:root` 
   --shadow-md: 0 2px 4px rgba(17,24,39,0.04), 0 4px 12px rgba(17,24,39,0.08);
   --shadow-lg: 0 4px 8px rgba(17,24,39,0.04), 0 12px 24px rgba(17,24,39,0.10);
   --shadow-xl: 0 8px 16px rgba(17,24,39,0.06), 0 24px 48px rgba(17,24,39,0.14);
-  --ring-focus: 0 0 0 3px rgba(99,102,241,0.25);
+  --ring-focus: 0 0 0 3px rgba(37,99,235,0.22);
 
   /* Colors — Backgrounds */
   --color-canvas: #F7F8FA; --color-surface: #FFFFFF;
@@ -1110,16 +1112,16 @@ For implementation: import or declare these as CSS custom properties in `:root` 
   --color-text-secondary: #6B7280; --color-text-tertiary: #9CA3AF;
   --color-text-disabled: #D1D5DB; --color-text-inverse: #FFFFFF;
 
-  /* Colors — Primary */
-  --color-primary: #6366F1; --color-primary-hover: #4F46E5;
-  --color-primary-active: #4338CA; --color-primary-subtle: #EEF2FF;
+  /* Colors — Primary (Blue) */
+  --color-primary: #2563EB; --color-primary-hover: #1D4ED8;
+  --color-primary-active: #1E3FAA; --color-primary-subtle: #EFF6FF;
 
   /* Colors — Accent */
   --color-accent: #F59E0B; --color-accent-subtle: #FEF3C7;
 
   /* Colors — Sidebar */
-  --color-sidebar-bg: #EEF2F8; --color-sidebar-active: #1E2939;
-  --color-sidebar-hover: #E2E8F0;
+  --color-sidebar-bg: #EBF3FF; --color-sidebar-active: #1E3A8A;
+  --color-sidebar-hover: #DBEAFE;
 
   /* Colors — Semantic */
   --color-success-bg: #F0FDF4; --color-success-text: #15803D;
@@ -1129,10 +1131,10 @@ For implementation: import or declare these as CSS custom properties in `:root` 
   --color-info-bg:    #EFF6FF; --color-info-text:    #1D4ED8;
 
   /* Gradients */
-  --grad-0-from: #6D5FBF; --grad-0-to: #4B7BA8;
-  --grad-1-from: #1A7FAD; --grad-1-to: #2A9D8F;
-  --grad-2-from: #2D7D52; --grad-2-to: #7A9E3B;
-  --grad-3-from: #C2692A; --grad-3-to: #C8A227;
+  --grad-0-from: #1E3A8A; --grad-0-to: #2563EB;   /* Ocean Deep */
+  --grad-1-from: #0E7490; --grad-1-to: #0D9488;   /* Deep Teal  */
+  --grad-2-from: #2D7D52; --grad-2-to: #7A9E3B;   /* Forest     */
+  --grad-3-from: #C2692A; --grad-3-to: #C8A227;   /* Ember      */
 
   /* Easing */
   --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
